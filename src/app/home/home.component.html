@@ -1,0 +1,45 @@
+<!-- home.component.html -->
+<div class="home-container" style="max-width:900px;margin:32px auto;padding:20px;">
+  <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div>
+      <h1 style="margin:0 0 6px 0;">Mon Casino</h1>
+      <small style="color:#666;">Bienvenue dans ton espace</small>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button (click)="logout()" aria-label="Se déconnecter"
+              style="padding:8px 12px;border-radius:6px;border:none;background:#e53935;color:white;cursor:pointer;">
+        Se déconnecter
+      </button>
+    </div>
+  </header>
+
+  <main style="background:#fff;padding:18px;border-radius:8px;border:1px solid #eee;box-shadow:0 1px 6px rgba(0,0,0,0.03);">
+    <section style="margin-bottom:14px;">
+      <h2 style="margin:0 0 8px 0;">Bienvenue {{ pseudo }} 🎉</h2>
+      <p style="margin:0;color:#444;">Tu es connecté·e — explore ton tableau de bord ou commence une partie.</p>
+    </section>
+
+    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px;">
+      <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
+        <h3 style="margin:0 0 6px 0;">Profil</h3>
+        <p style="margin:0;">Pseudo : <strong>{{ pseudo }}</strong></p>
+        <p style="margin:6px 0 0 0;">Email : <small>{{ userObj?.email || 'Non disponible' }}</small></p>
+      </article>
+
+      <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
+        <h3 style="margin:0 0 6px 0;">Actions rapides</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <button type="button" [routerLink]="['/play']" style="padding:8px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">Jouer</button>
+          <button type="button" [routerLink]="['/offers']" style="padding:8px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">Offres</button>
+        </div>
+      </article>
+
+      <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
+        <h3 style="margin:0 0 6px 0;">Sécurité</h3>
+        <p style="margin:0;">Token stocké : <small>{{ tokenPresent ? '✔️ présent' : '❌ absent' }}</small></p>
+        <p style="margin:6px 0 0 0;font-size:0.9rem;color:#666;">Déconnecte-toi pour tester le flux d'authentification.</p>
+      </article>
+    </section>
+  </main>
+</div>

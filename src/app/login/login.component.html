@@ -1,0 +1,50 @@
+<!-- login.component.html -->
+<div class="auth-wrapper" style="max-width:420px;margin:40px auto;padding:20px;border:1px solid #e5e5e5;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+  <header style="text-align:center;margin-bottom:16px;">
+    <h2 style="margin:0 0 4px 0;">Connexion</h2>
+    <small>Connecte-toi pour accéder à ton espace</small>
+  </header>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+    <div style="margin-bottom:12px;">
+      <label for="email" style="display:block;font-weight:600;margin-bottom:6px;">Email</label>
+      <input id="email" type="email" formControlName="email" placeholder="ex : toi@example.com"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;" />
+      <div *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" style="color:#b00020;margin-top:6px;font-size:0.9rem;">
+        <div *ngIf="loginForm.get('email')?.errors?.['required']">L'email est requis.</div>
+        <div *ngIf="loginForm.get('email')?.errors?.['email']">Format d'email invalide.</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label for="motDePasse" style="display:block;font-weight:600;margin-bottom:6px;">Mot de passe</label>
+      <input id="motDePasse" type="password" formControlName="motDePasse" placeholder="••••••••"
+             style="width:100%;padding:8px;border:1px solid #ccc;border-radius:4px;" />
+      <div *ngIf="loginForm.get('motDePasse')?.touched && loginForm.get('motDePasse')?.invalid" style="color:#b00020;margin-top:6px;font-size:0.9rem;">
+        <div *ngIf="loginForm.get('motDePasse')?.errors?.['required']">Le mot de passe est requis.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:18px;">
+      <button type="submit"
+              [disabled]="loginForm.invalid"
+              style="padding:10px 16px;border-radius:6px;border:none;cursor:pointer;background:#1976d2;color:white;font-weight:600;">
+        Se connecter
+      </button>
+
+      <!-- utilisation de routerLink -->
+      <button type="button" [routerLink]="['/register']"
+              style="padding:8px 12px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">
+        S'inscrire
+      </button>
+    </div>
+
+    <p *ngIf="errorMessage" style="color:#b00020;margin-top:14px;font-weight:600;">
+      {{ errorMessage }}
+    </p>
+  </form>
+
+  <footer style="margin-top:18px;font-size:0.9rem;color:#666;text-align:center;">
+    <p style="margin:6px 0 0 0;">Mot de passe oublié ? <a href="#" (click)="$event.preventDefault(); alert('Implémenter la récupération de mot de passe');">Récupération</a></p>
+  </footer>
+</div>
