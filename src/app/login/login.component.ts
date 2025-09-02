@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -10,7 +10,7 @@ import { AuthService } from '../services/auth.service';
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   errorMessage = '';
 
@@ -25,13 +25,18 @@ export class LoginComponent {
     });
   }
 
+  ngOnInit() {
+    // si déjà connecté, va directement sur /home
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/home']);
+    }
+  }
+
   onSubmit() {
     if (this.loginForm.valid) {
       const { email, motDePasse } = this.loginForm.value;
       this.authService.login(email!, motDePasse!).subscribe({
         next: (res: any) => {
-          console.log('Connexion réussie ✅', res);
-          // navigation via Router (meilleure pratique Angular)
           this.router.navigate(['/home']);
         },
         error: () => {

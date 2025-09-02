@@ -39,6 +39,7 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('jwt');
+    localStorage.removeItem('user')
   }
 
   isLoggedIn(): boolean {
