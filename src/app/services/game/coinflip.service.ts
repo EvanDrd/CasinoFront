@@ -32,7 +32,7 @@ export class CoinflipService {
     return this.http.get<{ probPile: number }>(`${this.base}/coinflip/bias`);
   }
 
-  setBias(probPile: number, adminKey: string) {
-    return this.http.post(`${this.base}/coinflip/bias`, { probPile, adminKey });
+  setBias(probPile: number) {
+    return this.http.post(`${this.base}/coinflip/bias`, { probPile });
   }
 }

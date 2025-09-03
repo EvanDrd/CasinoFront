@@ -1,0 +1,17 @@
+<div style="max-width:640px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
+  <h2>Administration — Pile ou Face</h2>
+
+  <div style="margin-top:12px;">
+    <label>Probabilité de PILE (0.0 à 1.0)</label><br/>
+    <input type="number" step="0.01" min="0" max="1" [(ngModel)]="probPile" />
+  </div>
+
+  <div style="margin-top:12px;">
+    <button (click)="save()" [disabled]="loading" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
+      Enregistrer
+    </button>
+  </div>
+
+  <div *ngIf="message" style="color:green;margin-top:8px">{{ message }}</div>
+  <div *ngIf="error" style="color:#b00020;margin-top:8px">{{ error }}</div>
+</div>
