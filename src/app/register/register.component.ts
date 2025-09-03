@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService, AuthResponse } from '../services/auth.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -9,11 +9,11 @@ import { of } from 'rxjs';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './register.component.html'
 })
-export class RegisterComponent {
-  formulaire: FormGroup;           // on ne l'initialise plus ici
+export class RegisterComponent implements OnInit {
+  formulaire: FormGroup;
   enCours = false;
   messageSucces: string | null = null;
   messageErreur: string | null = null;
@@ -24,12 +24,17 @@ export class RegisterComponent {
     private authService: AuthService,
     private router: Router
   ) {
-    // initialisation APRÈS injection du FormBuilder
     this.formulaire = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       pseudo: ['', [Validators.required, Validators.minLength(3)]],
       motDePasse: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  ngOnInit() {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/home']);
+    }
   }
 
   envoyer() {
@@ -42,7 +47,6 @@ export class RegisterComponent {
     this.messageErreur = null;
     this.messageSucces = null;
 
-    // On récupère les valeurs et on assure le type string (non-null) avec "!" car le formulaire est validé
     const email = this.formulaire.get('email')!.value as string;
     const pseudo = this.formulaire.get('pseudo')!.value as string;
     const motDePasse = this.formulaire.get('motDePasse')!.value as string;
@@ -66,7 +70,9 @@ export class RegisterComponent {
         if (!res) return;
         this.tokenRecus = res.token;
         this.messageSucces = 'Inscription réussie — token reçu.';
-        localStorage.setItem('casino_token', res.token);
+        // localStorage.setItem('casino_token', res.token);
+        // si tu veux rediriger automatiquement après inscription :
+        // this.router.navigate(['/home']);
       });
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import {Observable, tap} from 'rxjs';
 
 export interface AuthResponse {
   token: string;
@@ -21,5 +21,28 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.baseUrl}/register`, payload);
   }
 
-  // plus tard : connexion, logout, getProfile...
+  login(email: string, motDePasse: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl }/login`, { email, motDePasse }).pipe(
+      tap((res: AuthResponse) => {
+        this.saveToken(res.token);
+        localStorage.setItem('user', JSON.stringify(res)); // sauvegarde email + pseudo
+      }))
+  }
+
+  private saveToken(token: string) {
+    localStorage.setItem('jwt', token);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('jwt');
+  }
+
+  logout() {
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('user')
+  }
+
+  isLoggedIn(): boolean {
+    return this.getToken() != null;
+  }
 }
