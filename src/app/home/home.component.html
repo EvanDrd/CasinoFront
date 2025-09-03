@@ -17,22 +17,54 @@
   <main style="background:#fff;padding:18px;border-radius:8px;border:1px solid #eee;box-shadow:0 1px 6px rgba(0,0,0,0.03);">
     <section style="margin-bottom:14px;">
       <h2 style="margin:0 0 8px 0;">Bienvenue {{ pseudo }} 🎉</h2>
-      <p style="margin:0;color:#444;">Tu es connecté·e — explore ton tableau de bord ou commence une partie.</p>
+      <p style="margin:0;color:#444;">Tu es connecté·e — sélectionne un jeu ci-dessous pour commencer.</p>
     </section>
 
+    <!-- Catalogue des jeux -->
     <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px;">
+      <!-- Card: Pile ou Face -->
+      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
+        <div>
+          <h3 style="margin:0 0 6px 0;">Pile ou Face</h3>
+          <p style="margin:0;color:#666">Mise simple — 2× payout si tu gagnes. Choisis pile ou face.</p>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+          <button [routerLink]="['/play/coinflip']"
+                  style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
+            Jouer
+          </button>
+        </div>
+      </article>
+
+      <!-- Card: Roulette (stub) -->
+      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;">
+        <h3 style="margin:0 0 6px 0;">Roulette (bientôt)</h3>
+        <p style="margin:0;color:#666">Modes de mise variés — en développement.</p>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+          <button disabled style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fafafa;color:#999;cursor:not-allowed;">
+            Bientôt
+          </button>
+        </div>
+      </article>
+
+      <!-- Card: Machine à sous (stub) -->
+      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;">
+        <h3 style="margin:0 0 6px 0;">Machine à sous (bientôt)</h3>
+        <p style="margin:0;color:#666">Jackpots & lignes — en développement.</p>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+          <button disabled style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fafafa;color:#999;cursor:not-allowed;">
+            Bientôt
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <!-- Profil / Info -->
+    <section style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
       <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
         <h3 style="margin:0 0 6px 0;">Profil</h3>
         <p style="margin:0;">Pseudo : <strong>{{ pseudo }}</strong></p>
         <p style="margin:6px 0 0 0;">Email : <small>{{ userObj?.email || 'Non disponible' }}</small></p>
-      </article>
-
-      <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
-        <h3 style="margin:0 0 6px 0;">Actions rapides</h3>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-          <button type="button" [routerLink]="['/play']" style="padding:8px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">Jouer</button>
-          <button type="button" [routerLink]="['/offers']" style="padding:8px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">Offres</button>
-        </div>
       </article>
 
       <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">

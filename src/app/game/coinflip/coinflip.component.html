@@ -1,0 +1,67 @@
+<!-- src/app/games/coinflip/coinflip.component.html -->
+<div class="container" style="max-width:640px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
+  <h2>Pile ou Face</h2>
+
+  <!-- Pièce animée -->
+  <div class="coin-stage" style="margin:16px 0; text-align:center;">
+    <div class="coin"
+         [class.spinning]="enCours"
+         [class.show-pile]="!enCours && lastResult?.outcome === 'pile'"
+         [class.show-face]="!enCours && lastResult?.outcome === 'face'"
+         style="display:inline-block;">
+      <div class="face front">PILE</div>
+      <div class="face back">FACE</div>
+    </div>
+  </div>
+
+  <div class="form-block" style="margin-bottom:12px;">
+    <label>Mise (crédits)</label><br/>
+    <input type="number" [(ngModel)]="mise" min="1" [max]="maxBet" />
+    <small style="display:block;color:#666">Solde actuel: <strong>{{ currentBalance ?? '—' }}</strong></small>
+  </div>
+
+  <div class="form-block" style="margin-bottom:12px;">
+    <label>Choisis :</label><br/>
+    <label style="margin-right:12px;">
+      <input type="radio" name="choix" [(ngModel)]="choix" value="pile" /> Pile
+    </label>
+    <label>
+      <input type="radio" name="choix" [(ngModel)]="choix" value="face" /> Face
+    </label>
+  </div>
+
+  <div class="actions" style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+    <button (click)="jouer()" [disabled]="enCours" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
+      Jouer
+    </button>
+
+    <!-- BOUTON RETOUR -->
+    <button [routerLink]="['/home']"
+            style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
+      Retour
+    </button>
+  </div>
+
+  <div *ngIf="message || error" class="result-box" style="margin-top:14px;padding:10px;border-radius:6px;background:#f7f7f7;">
+    <div *ngIf="lastResult">
+      <p><strong>Résultat :</strong> {{ lastResult?.outcome | uppercase }}</p>
+
+      <p *ngIf="lastResult?.win" class="win" style="color:green">
+        Tu as gagné ! Montant crédité : <strong>{{ lastResult?.montantGagne }}</strong> crédits.
+        <br/>
+      </p>
+
+      <p *ngIf="lastResult && !lastResult.win" class="lose" style="color:#b00020">
+        Tu as perdu. Perte : <strong>{{ lastResult?.montantJoue }}</strong> crédits.
+      </p>
+
+      <p>Solde actuel : <strong>{{ lastResult?.solde }}</strong></p>
+    </div>
+
+    <p *ngIf="error" class="error" style="color:#b00020">{{ error }}</p>
+  </div>
+
+  <div style="margin-top:12px;color:#666">
+    <small>Note : si tu gagnes, le payout = 2 × mise (la mise a été débitée au départ). Gain net = payout − mise.</small>
+  </div>
+</div>
