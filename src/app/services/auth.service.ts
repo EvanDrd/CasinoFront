@@ -8,6 +8,7 @@ export interface AuthResponse {
   token: string;
   email: string;
   pseudo: string;
+  role: string;
 }
 
 @Injectable({
