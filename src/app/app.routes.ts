@@ -10,6 +10,8 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent, canActivate: [GuestGuard] },
   { path: 'login', component: LoginComponent, canActivate: [GuestGuard] },
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'play/coinflip', loadComponent: () => import('./game/coinflip/coinflip.component').then(m => m.CoinflipComponent) }
+
 
   // autres routes...
 ];

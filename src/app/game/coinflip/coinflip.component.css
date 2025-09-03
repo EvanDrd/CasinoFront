@@ -1,0 +1,83 @@
+.container {
+  max-width: 640px;
+  margin: 20px auto;
+  padding: 18px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.coin-stage {
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 160px;
+  margin-bottom: 20px;
+}
+
+.coin {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1s ease;
+}
+
+.coin.spinning {
+  animation: spin 0.001s linear infinite;
+}
+
+.face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 20px;
+  color: white;
+}
+
+.front {
+  background: #1976d2;
+}
+
+.back {
+  background: #e53935;
+  transform: rotateY(180deg);
+}
+
+.coin.show-pile { transform: rotateY(0deg); }
+.coin.show-face { transform: rotateY(180deg); }
+
+@keyframes spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+.form-block {
+  margin-bottom: 12px;
+}
+
+.actions button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.result-box {
+  margin-top: 14px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #f7f7f7;
+}
+
+.win { color: green; }
+.lose { color: #b00020; }
+.error { color: #b00020; }
