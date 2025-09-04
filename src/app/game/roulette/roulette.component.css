@@ -1,0 +1,125 @@
+.roulette-container {
+  display: flex;
+  gap: 20px;
+}
+
+.left, .right {
+  flex: 1;
+}
+
+.wheel-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.wheel-wrapper {
+  position: relative;
+  border: 4px solid #333;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.wheel-numbers-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+}
+
+.wheel-numbers {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+
+.wheel-numbers.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.wheel-number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+}
+
+.num-label {
+  font-size: 14px;
+  font-weight: bold;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  background: black;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+}
+
+.num-label.red {
+  background: red;
+}
+
+.num-label.green {
+  background: green;
+}
+
+.pointer {
+  position: absolute;
+  top: -15px;           /* au-dessus de la roue */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  color: red;
+  font-weight: bold;
+  z-index: 10;
+}
+
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.num-btn {
+  padding: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.num-btn.selected {
+  background: #e53935;
+  color: #fff;
+}
+
+.status .win {
+  color: green;
+}
+
+.status .lose {
+  color: red;
+}
+
+.error {
+  color: #b00020;
+}
+
+.final-phrase {
+  margin-top: 10px;
+  font-weight: bold;
+}
