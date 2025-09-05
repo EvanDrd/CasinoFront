@@ -1,0 +1,125 @@
+<div style="max-width:1000px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
+  <h2>Administration — Machine à sous</h2>
+
+  <div style="margin-top:12px;display:flex;gap:20px;flex-wrap:wrap;">
+    <div>
+      <label>Nombre de rouleaux</label><br/>
+      <input type="number" [(ngModel)]="reelsCount" (change)="setReelsCount(reelsCount)" min="1" style="width:80px" />
+    </div>
+
+    <div>
+      <h3 style="margin:0 0 6px 0;">Payouts (multiplicateurs)</h3>
+      <div *ngFor="let k of payoutKeysDesc()" style="margin-bottom:6px;">
+        <label style="display:inline-block;width:140px">{{ k }} identiques →</label>
+        <input type="number" [(ngModel)]="payouts[k]" min="0" style="width:120px" />
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <h3>Symboles</h3>
+    <button (click)="addSymbol()" style="padding:6px 10px;margin-bottom:8px">Ajouter symbole</button>
+
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+      <tr>
+        <th style="text-align:left;padding:8px;border-bottom:1px solid #eee">#</th>
+        <th style="text-align:left;padding:8px;border-bottom:1px solid #eee">Symbole</th>
+        <th *ngFor="let ri of range(reelsCount)" style="padding:8px;border-bottom:1px solid #eee">
+          Rouleau {{ ri+1 }}
+          <div style="font-size:0.8rem;color:#666">Total: {{ totalWeight(ri) }}</div>
+        </th>
+        <th style="padding:8px;border-bottom:1px solid #eee"></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let sym of symbols; let i=index">
+        <td style="padding:8px;border-bottom:1px solid #fafafa">{{ i+1 }}</td>
+        <td style="padding:8px;border-bottom:1px solid #fafafa">
+          <input [(ngModel)]="symbols[i]" style="width:100px" />
+        </td>
+
+        <td *ngFor="let ri of range(reelsCount)" style="padding:8px;border-bottom:1px solid #fafafa;vertical-align:top;">
+          <input type="number" [(ngModel)]="reelWeights[ri][i]" min="0" style="width:80px" />
+          <div style="font-size:0.8rem;color:#666;margin-top:4px;">
+            {{ getPercent(ri, i) }}
+          </div>
+        </td>
+
+        <td style="padding:8px;border-bottom:1px solid #fafafa">
+          <button (click)="removeSymbol(i)" style="padding:4px 8px">Suppr</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Probabilities preview -->
+  <div style="margin-top:20px;">
+    <h3>Prévisualisation : probabilité (exactement k identiques) par symbole</h3>
+    <div style="overflow:auto;border:1px solid #f0f0f0;padding:10px;border-radius:6px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+        <tr>
+          <th style="text-align:left;padding:8px;border-bottom:1px solid #eee">Symbole</th>
+          <th *ngFor="let k of ksFrom2()" style="padding:8px;border-bottom:1px solid #eee">
+            {{ k }} identiques
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let row of symbolProbabilities(); let ri = index">
+          <td style="padding:8px;border-bottom:1px solid #fafafa">{{ row.symbol }}</td>
+          <td *ngFor="let k of ksFrom2()" style="padding:8px;border-bottom:1px solid #fafafa">
+            {{ (row.probs[k] * 100) | number:'1.2-2' }} %
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Simulation -->
+  <div style="margin-top:20px;">
+    <h3>Simulation locale</h3>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <label>Nombre de spins :</label>
+      <input type="number" [(ngModel)]="simSpins" min="10" style="width:120px" />
+      <button (click)="simulate(simSpins)" [disabled]="simRunning" style="padding:8px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
+        Simuler
+      </button>
+      <small style="color:#666">La simulation utilise mise = 1 unité par spin.</small>
+    </div>
+
+    <div *ngIf="simResult" style="margin-top:12px;padding:10px;border-radius:6px;background:#fafafa;">
+      <p style="margin:0">RTP estimé : <strong>{{ (simResult.rtp * 100) | number:'1.2-2' }} %</strong></p>
+      <p style="margin:0">Retour total / mise totale : {{ simResult.totalReturn }} / {{ simResult.totalBet }}</p>
+      <p style="margin:0">Gain moyen par spin : {{ simResult.avgReturnPerSpin | number:'1.4-4' }}</p>
+
+      <div style="margin-top:8px;">
+        <h4 style="margin:4px 0">Fréquences par k (exactement k identiques observés)</h4>
+        <table style="border-collapse:collapse;">
+          <thead><tr><th style="padding:6px 8px;border-bottom:1px solid #eee">k</th><th style="padding:6px 8px;border-bottom:1px solid #eee">observations</th><th style="padding:6px 8px;border-bottom:1px solid #eee">%</th></tr></thead>
+          <tbody>
+          <tr *ngFor="let k of payoutKeysDesc()">
+            <td style="padding:6px 8px">{{ k }}</td>
+            <td style="padding:6px 8px">{{ simResult.countsByK[k] || 0 }}</td>
+            <td style="padding:6px 8px">{{ ((simResult.countsByK[k] || 0) / simResult.totalBet * 100) | number:'1.2-2' }} %</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <button (click)="save()" [disabled]="loading" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
+      Enregistrer
+    </button>
+    <button [routerLink]="['/home']" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;margin-left:8px;">
+      Retour
+    </button>
+    <span *ngIf="message" style="color:green;margin-left:12px">{{ message }}</span>
+    <span *ngIf="error" style="color:#b00020;margin-left:12px">{{ error }}</span>
+  </div>
+</div>

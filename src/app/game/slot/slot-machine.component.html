@@ -1,0 +1,51 @@
+<div class="slot-wrap" style="max-width:920px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
+  <h2>Machine à sous</h2>
+
+  <div style="margin:16px 0;">
+    <small>Solde actuel: <strong>{{ currentBalance ?? '—' }}</strong></small>
+  </div>
+
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+    <label style="min-width:90px;">Mise (crédits)</label>
+    <input type="number" [(ngModel)]="mise" min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
+    <button (click)="jouer()" [disabled]="enCours" class="spin-btn">
+      {{ enCours ? 'Spinning…' : 'Spin' }}
+    </button>
+
+    <button [routerLink]="['/home']" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
+      Retour
+    </button>
+  </div>
+
+  <!-- reels area -->
+  <div class="reels-area" [class.disabled]="enCours">
+    <div class="reel" *ngFor="let reel of reels; let ri = index">
+      <!-- strip is the scrolling element -->
+      <div class="strip" #reelStrip>
+        <div class="cell" *ngFor="let s of reel.sequence">{{ s }}</div>
+      </div>
+      <!-- center marker -->
+      <div class="mask"></div>
+    </div>
+  </div>
+
+  <div *ngIf="lastResult" class="result-block">
+    <div class="final-row">
+      <div *ngFor="let s of lastResult.reels" class="final-cell">{{ s }}</div>
+    </div>
+
+    <p *ngIf="lastResult.win" style="color:green;margin:0;">
+      Tu as gagné ! Montant crédité : <strong>{{ lastResult.montantGagne }}</strong> crédits.
+    </p>
+    <p *ngIf="!lastResult.win" style="color:#b00020;margin:0;">
+      Tu as perdu. Perte : <strong>{{ lastResult.montantJoue }}</strong> crédits.
+    </p>
+    <p style="margin-top:8px;">Solde actuel : <strong>{{ lastResult.solde }}</strong></p>
+  </div>
+
+  <div *ngIf="error" style="color:#b00020;margin-top:12px">{{ error }}</div>
+
+  <div style="margin-top:18px;color:#666">
+    <small>Machine visuelle adaptative — le nombre de rouleaux s'ajuste à la configuration.</small>
+  </div>
+</div>

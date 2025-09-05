@@ -1,0 +1,98 @@
+/* container */
+.reels-area {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0;
+  min-height: 160px;
+}
+
+/* each reel */
+.reel {
+  width: calc(100% / 3 - 16px); /* fallback, each reel will flex below */
+  max-width: 120px;
+  flex: 1 1 80px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(#fff, #fbfbfb);
+  border: 1px solid #eee;
+  height: 180px; /* visible area height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* the moving strip (very tall) */
+.strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* initially we place at 0, animation will be applied with 'spinning' class */
+  transform: translateY(0);
+}
+
+/* cell (each symbol) */
+.cell {
+  height: 60px;
+  line-height: 60px;
+  font-size: 36px;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  background: transparent;
+  user-select: none;
+}
+
+/* spinning animation: continuous translateY loop */
+.strip.spinning {
+  animation: spinLoop 0.9s linear infinite;
+  will-change: transform;
+}
+
+/* change speed per reel with .reel:nth-child */
+.reel:nth-child(1) .strip.spinning { animation-duration: 0.85s; }
+.reel:nth-child(2) .strip.spinning { animation-duration: 0.95s; }
+.reel:nth-child(3) .strip.spinning { animation-duration: 0.9s; }
+.reel:nth-child(4) .strip.spinning { animation-duration: 0.85s; }
+.reel:nth-child(5) .strip.spinning { animation-duration: 1.05s; }
+
+@keyframes spinLoop {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); } /* moves, it will loop */
+}
+
+/* mask (center marker) - used to hide top/bottom and highlight center cell */
+.mask {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 60px; /* same as .cell height */
+  transform: translateY(-50%);
+  pointer-events: none;
+  box-shadow: inset 0 12px 20px -12px rgba(0,0,0,0.06);
+  border-top: 1px solid rgba(0,0,0,0.03);
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  background: linear-gradient(transparent, rgba(255,255,255,0.02));
+}
+
+/* final row display */
+.result-block .final-row {
+  display:flex;
+  gap:12px;
+  justify-content:center;
+  margin-bottom:8px;
+}
+.final-cell {
+  font-size:36px;
+  min-width:64px;
+  text-align:center;
+}
+
+/* disable pointer events while spinning */
+.reels-area.disabled {
+  pointer-events: none;
+  opacity: 0.95;
+}
