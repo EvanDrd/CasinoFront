@@ -50,11 +50,12 @@
 
       <!-- Card: Machine à sous (stub) -->
       <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;">
-        <h3 style="margin:0 0 6px 0;">Machine à sous (bientôt)</h3>
+        <h3 style="margin:0 0 6px 0;">Machine à sous</h3>
         <p style="margin:0;color:#666">Jackpots & lignes — en développement.</p>
         <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-          <button disabled style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fafafa;color:#999;cursor:not-allowed;">
-            Bientôt
+            <button [routerLink]="['/play/slots']"
+                    style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
+            Jouer
           </button>
         </div>
       </article>

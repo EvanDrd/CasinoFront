@@ -13,6 +13,8 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
   { path: 'play/coinflip', loadComponent: () => import('./game/coinflip/coinflip.component').then(m => m.CoinflipComponent) },
   { path: 'admin/coinflip', loadComponent: () => import('./admin/coinflip-admin.component').then(m => m.CoinflipAdminComponent), canActivate: [AuthGuard, AdminGuard] },
+  { path: 'play/slots', loadComponent: () => import('./game/slot/slot-machine.component').then(m => m.SlotMachineComponent), canActivate: [AuthGuard] },
+  { path: 'admin/slots', loadComponent: () => import('./admin/slots-admin.component').then(m => m.SlotsAdminComponent), canActivate: [AuthGuard, AdminGuard] },
   { path: 'play/roulette', loadComponent: () => import('./game/roulette/roulette.component').then(m => m.RouletteComponent) }
 
 
