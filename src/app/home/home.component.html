@@ -41,8 +41,9 @@
         <h3 style="margin:0 0 6px 0;">Roulette (bientôt)</h3>
         <p style="margin:0;color:#666">Modes de mise variés — en développement.</p>
         <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-          <button disabled style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:#fafafa;color:#999;cursor:not-allowed;">
-            Bientôt
+          <button [routerLink]="['/play/roulette']"
+                  style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
+            Jouer
           </button>
         </div>
       </article>
