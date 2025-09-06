@@ -31,11 +31,19 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   // combien de répétitions des symbols pour créer l'effet de loop
   private loops = 6;
 
+  // minimale durée visuelle du spin (ms) pour éviter arret instantané)
+  private minSpinMs = 600;
+  private spinStartAt = 0;
+
   private sub?: Subscription;
   private configSub?: Subscription;
 
   // refs to reel DOM elements (the inner strip)
   @ViewChildren('reelStrip') reelStrips!: QueryList<ElementRef<HTMLDivElement>>;
+
+  // fallback timers pour transición / nettoyage
+  private cleanupTimeout: any = null;
+  private transitionTimeouts: any[] = [];
 
   constructor(private game: SlotService, private wallet: WalletService, private cdr: ChangeDetectorRef) {
     this.sub = this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
@@ -53,11 +61,10 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // nothing immediate — reelStrips becomes available after view init
+    // reelStrips devient disponible après l'initialisation de la vue
   }
 
   private buildReels() {
-    // construit les reels: sequence = symbols répétées `loops` fois
     if (!this.symbols || this.symbols.length === 0) this.symbols = ['SYM'];
     this.reels = [];
     for (let r = 0; r < this.reelsCount; r++) {
@@ -77,6 +84,7 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
 
     // disable UI
     this.enCours = true;
+    this.spinStartAt = Date.now();
 
     // start visual spinning animation
     this.startVisualSpin();
@@ -85,115 +93,150 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     this.game.playSlots({ montant: this.mise }).subscribe({
       next: (res) => {
         this.lastResult = res;
-        // land reels onto result
-        //this.stopAndLand(re: any => {}); // placeholder to ensure TypeScript happy
-        this.landToResult(res.reels);
-        // refresh balance
-        this.wallet.refreshBalance();
+        // on attend la durée minimale pour que l'utilisateur voie l'animation
+        const elapsed = Date.now() - this.spinStartAt;
+        const wait = Math.max(0, this.minSpinMs - elapsed);
+        setTimeout(() => {
+          this.landToResult(res.reels);
+          // refresh balance (SSE ou pull)
+          this.wallet.refreshBalance();
+        }, wait);
       },
       error: (err) => {
         this.error = err?.error?.error || 'Erreur serveur ou solde insuffisant';
-        // stop visual spin gracefully
         this.stopAllSpinImmediate();
         this.enCours = false;
-      },
-      complete: () => {
-        this.enCours = false;
-        // will be set to false after landing animation ends
       }
     });
   }
 
   /** Ajoute la classe spinning aux strips (animation CSS continue) */
   private startVisualSpin() {
-    // ensure reels built
     this.buildReels();
-    // apply class
+    // clear any previous timeouts/listeners
+    this.clearAllTimers();
     setTimeout(() => {
       this.reelStrips.forEach(elref => {
         const el = elref.nativeElement;
-        el.classList.add('spinning');
-        // clear any inline transform/transition
+        // remove inline transform/transition before anim
         el.style.transition = '';
         el.style.transform = '';
+        // add class that triggers CSS animation
+        el.classList.add('spinning');
       });
     }, 20);
   }
 
   /** Stoppe l'animation en cours et positionne chaque reel pour correspondre au résultat */
   private landToResult(resultSymbols: string[]) {
-    // Wait until DOM children are ready
+    // Wait a tick so DOM is stable
     setTimeout(() => {
       const strips = this.reelStrips.toArray();
       const cellHeight = this.getCellHeight();
-      const centerOffset = Math.floor((this.visibleCells() / 2)) * cellHeight; // to center the symbol if needed
+      const centerOffset = Math.floor((this.visibleCells() / 2)) * cellHeight;
 
-      // for each reel compute target index in sequence: choose last loop occurrence of the symbol
+      // cleanup timer fallback (au cas où transitionend ne s'exécute pas) :
+      const maxDuration = 1200 + (strips.length - 1) * 200;
+      if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout);
+      this.cleanupTimeout = setTimeout(() => { this.forceCleanup(); }, maxDuration + 500);
+
+      let lastStripEl: HTMLDivElement | null = null;
       for (let r = 0; r < Math.min(resultSymbols.length, strips.length); r++) {
         const targetSym = resultSymbols[r];
-        const stripEl = strips[r].nativeElement;
+        const stripEl = strips[r].nativeElement as HTMLDivElement;
+        lastStripEl = stripEl;
 
-        // find index of the symbol in the last loop
-        const symbolsPerLoop = this.symbols.length;
-        // prefer the last loop (loops-1)
+        // find index of the symbol in the last loop (from end)
         let targetIndexInSeq = -1;
-        // search from end for matching symbol
         for (let idx = this.reels[r].sequence.length - 1; idx >= 0; idx--) {
           if (this.reels[r].sequence[idx] === targetSym) {
             targetIndexInSeq = idx;
             break;
           }
         }
-        if (targetIndexInSeq < 0) {
-          // fallback: pick random index
-          targetIndexInSeq = Math.floor(Math.random() * this.reels[r].sequence.length);
-        }
+        if (targetIndexInSeq < 0) targetIndexInSeq = Math.floor(Math.random() * this.reels[r].sequence.length);
 
-        // pause animation loop
+        // stop CSS loop: remove class then force reflow to "freeze" animation
         stripEl.classList.remove('spinning');
+        // force reflow
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        stripEl.offsetWidth;
 
-        // compute desired translateY so that the target cell appears centered (or at top)
-        // translate px = targetIndexInSeq * cellHeight - centerOffset
+        // compute translate so target is centered
         const translate = (targetIndexInSeq * cellHeight) - centerOffset;
 
-        // apply smooth transition to final position
-        // stagger durations a bit (longer for rightmost reels)
-        const duration = 800 + r * 150; // ms
+        // transition duration (stagger by reel)
+        const duration = 900 + r * 200;
         stripEl.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.2,1)`;
         stripEl.style.transform = `translateY(-${translate}px)`;
 
-        // after transition for last reel, re-enable UI
-        if (r === strips.length - 1) {
-          const cleanup = () => {
-            this.enCours = false;
-            // clear inline transition after short delay to let user spin again smoothly
-            setTimeout(() => {
-              try {
-                stripEl.style.transition = '';
-              } catch {}
-            }, 200);
-          };
-          // attach event once
-          const onEnd = () => {
-            cleanup();
-            stripEl.removeEventListener('transitionend', onEnd);
-          };
-          stripEl.addEventListener('transitionend', onEnd);
-        }
+        // attach transitionend listener on each strip (but final cleanup on last strip)
+        const onEnd = (ev: TransitionEvent) => {
+          // remove listener
+          stripEl.removeEventListener('transitionend', onEnd);
+        };
+        stripEl.addEventListener('transitionend', onEnd);
+
+        // also set a per-strip fallback in case transitionend doesn't fire
+        const toId = setTimeout(() => {
+          try { stripEl.removeEventListener('transitionend', onEnd); } catch {}
+        }, duration + 400);
+        this.transitionTimeouts.push(toId);
       }
-    }, 50);
+
+      // attach final listener on last strip to re-enable UI
+      if (lastStripEl) {
+        const finalOnEnd = () => {
+          // clear fallback cleanup
+          this.clearAllTimers();
+          // small timeout to allow user to see result
+          setTimeout(() => { this.enCours = false; }, 120);
+          lastStripEl!.removeEventListener('transitionend', finalOnEnd);
+        };
+        lastStripEl.addEventListener('transitionend', finalOnEnd);
+
+        // ensure fallback cleanup after expected duration
+        const finalTimeout = setTimeout(() => {
+          try {
+            lastStripEl!.removeEventListener('transitionend', finalOnEnd);
+          } catch {}
+          this.forceCleanup();
+        }, (900 + (strips.length - 1) * 200) + 800);
+        this.transitionTimeouts.push(finalTimeout);
+      } else {
+        // pas de strips trouvés -> cleanup immédiat
+        this.forceCleanup();
+      }
+    }, 40);
   }
 
-  /** Stops all spins immediately (used on error) */
+  /** Removes spinning classes and inline transitions (immediate stop) */
   private stopAllSpinImmediate() {
     this.reelStrips.forEach(elref => {
       const el = elref.nativeElement;
       el.classList.remove('spinning');
       el.style.transition = '';
     });
+    this.clearAllTimers();
   }
 
-  /** helper pour récupérer hauteur d'une cellule (assume toutes identiques) */
+  private forceCleanup() {
+    // stop all animation classes and inline transitions
+    this.reelStrips.forEach(elref => {
+      const el = elref.nativeElement;
+      el.classList.remove('spinning');
+      el.style.transition = '';
+    });
+    this.clearAllTimers();
+    this.enCours = false;
+  }
+
+  private clearAllTimers() {
+    if (this.cleanupTimeout) { clearTimeout(this.cleanupTimeout); this.cleanupTimeout = null; }
+    this.transitionTimeouts.forEach(t => clearTimeout(t));
+    this.transitionTimeouts = [];
+  }
+
   private getCellHeight(): number {
     const firstStrip = this.reelStrips.first;
     if (!firstStrip) return 64;
@@ -202,14 +245,13 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     return Math.max(32, Math.round(cell.getBoundingClientRect().height));
   }
 
-  /** Combien de cellules visibles verticalement (pour centrer) */
   private visibleCells(): number {
-    // Ici on affiche 3 cellules visibles par reel (centré). Ajuste si tu changes le CSS.
     return 3;
   }
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
     this.configSub?.unsubscribe();
+    this.clearAllTimers();
   }
 }

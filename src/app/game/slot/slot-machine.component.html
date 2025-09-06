@@ -8,7 +8,7 @@
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
     <label style="min-width:90px;">Mise (crédits)</label>
     <input type="number" [(ngModel)]="mise" min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
-    <button (click)="jouer()" [disabled]="enCours" class="spin-btn">
+    <button (click)="jouer()" [disabled]="enCours" class="spin-btn" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
       {{ enCours ? 'Spinning…' : 'Spin' }}
     </button>
 
@@ -29,9 +29,9 @@
     </div>
   </div>
 
-  <div *ngIf="lastResult" class="result-block">
-    <div class="final-row">
-      <div *ngFor="let s of lastResult.reels" class="final-cell">{{ s }}</div>
+  <div *ngIf="lastResult" class="result-block" style="margin-top:12px;padding:10px;border-radius:6px;background:#fafafa;">
+    <div class="final-row" style="display:flex;gap:12px;justify-content:center;margin-bottom:8px;">
+      <div *ngFor="let s of lastResult.reels" style="font-size:36px;min-width:64px;text-align:center;">{{ s }}</div>
     </div>
 
     <p *ngIf="lastResult.win" style="color:green;margin:0;">
