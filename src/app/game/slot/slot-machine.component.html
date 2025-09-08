@@ -5,19 +5,45 @@
     <small>Solde actuel: <strong>{{ currentBalance ?? '—' }}</strong></small>
   </div>
 
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-    <label style="min-width:90px;">Mise (crédits)</label>
-    <input type="number" [(ngModel)]="mise" min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
-    <button (click)="jouer()" [disabled]="enCours" class="spin-btn" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
-      {{ enCours ? 'Spinning…' : 'Spin' }}
-    </button>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <label style="min-width:90px;">Mise (crédits)</label>
+        <input type="number" [(ngModel)]="mise" min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
 
-    <button [routerLink]="['/home']" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
-      Retour
-    </button>
-  </div>
+        <!-- Spin bouton largeur fixe -->
+        <button (click)="jouer()" [disabled]="enCours" class="spin-btn" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
+            {{ enCours ? 'Spinning…' : 'Spin' }}
+        </button>
 
-  <!-- reels area -->
+        <!-- Auto-spin count -->
+        <label style="margin-left:6px;">Nombre d'autospins</label>
+        <input type="number" [(ngModel)]="autoSpinCount" min="0"
+               title="0 = infini" style="width:80px;padding:6px;border:1px solid #ccc;border-radius:4px" />
+
+        <button (click)="startAutoSpin()" [disabled]="autoSpinActive || (currentBalance!=null && mise>currentBalance)"
+                style="padding:8px 12px;border-radius:6px;border:1px solid #1976d2;background:#e8f0ff;color:#1976d2;cursor:pointer;">
+            Auto-Spin
+        </button>
+
+        <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive"
+                style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
+            Stop
+        </button>
+
+        <button [routerLink]="['/home']" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
+            Retour
+        </button>
+
+        <!-- info remaining -->
+        <div *ngIf="autoSpinActive" style="margin-left:8px;color:#333;font-weight:600;">
+            <small>
+                {{ remainingAutoSpins != null ? ('Restant: ' + remainingAutoSpins) : 'Auto : infini' }}
+            </small>
+        </div>
+    </div>
+
+
+
+    <!-- reels area -->
   <div class="reels-area" [class.disabled]="enCours">
     <div class="reel" *ngFor="let reel of reels; let ri = index">
       <!-- strip is the scrolling element -->

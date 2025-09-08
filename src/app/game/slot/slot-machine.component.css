@@ -76,3 +76,18 @@
 .final-cell { font-size:36px; min-width:64px; text-align:center; }
 
 .reels-area.disabled { pointer-events: none; opacity: 0.95; }
+
+/* bouton Spin largeur fixe pour éviter décalage au changement de label */
+.spin-btn {
+  width: 110px; /* ou la taille que tu préfères */
+  text-align: center;
+}
+
+/* facultatif : style pour indiquer auto-spin actif */
+.auto-active {
+  background: linear-gradient(#ffd, #ffe4b5);
+  border-color: #f39c12;
+  color: #333;
+}
+
+

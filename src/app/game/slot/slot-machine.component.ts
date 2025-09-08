@@ -28,27 +28,33 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   reelsCount = 3;
   reels: ReelModel[] = [];
 
-  // combien de répétitions des symbols pour créer l'effet de loop
+  // repetitions for loop effect
   private loops = 6;
 
-  // minimale durée visuelle du spin (ms) pour éviter arret instantané)
+  // minimal visual spin duration (ms)
   private minSpinMs = 600;
   private spinStartAt = 0;
 
   private sub?: Subscription;
   private configSub?: Subscription;
 
-  // refs to reel DOM elements (the inner strip)
   @ViewChildren('reelStrip') reelStrips!: QueryList<ElementRef<HTMLDivElement>>;
 
-  // fallback timers pour transición / nettoyage
+  // timers / fallbacks used by existing code
   private cleanupTimeout: any = null;
   private transitionTimeouts: any[] = [];
+
+  // --- Auto-spin state ---
+  autoSpinActive = false;                 // true = auto-spin ON
+  autoSpinCount = 0;                      // configuré par l'UI (0 = infini)
+  protected remainingAutoSpins: number | null = null; // null = infini
+  private autoSpinDelay = 900;            // délai entre spins (ms)
+  private autoSpinTimeoutId: any = null;  // timeout id pour enchaîner spins
 
   constructor(private game: SlotService, private wallet: WalletService, private cdr: ChangeDetectorRef) {
     this.sub = this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
 
-    // charger config initiale
+    // load config
     this.configSub = this.game.getSlotsConfig().subscribe({
       next: (cfg: SlotConfigResponse) => {
         this.symbols = cfg.symbols || [];
@@ -60,45 +66,43 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    // reelStrips devient disponible après l'initialisation de la vue
-  }
+  ngAfterViewInit(): void { /* nothing extra */ }
 
   private buildReels() {
     if (!this.symbols || this.symbols.length === 0) this.symbols = ['SYM'];
     this.reels = [];
+    const pad = this.visibleCells(); // padding to avoid empty tail
     for (let r = 0; r < this.reelsCount; r++) {
       const seq: string[] = [];
       for (let l = 0; l < this.loops; l++) {
         for (const s of this.symbols) seq.push(s);
       }
+      for (let p = 0; p < pad; p++) seq.push(this.symbols[p % this.symbols.length]);
       this.reels.push({ sequence: seq });
     }
   }
 
+  // ----------------- play -----------------
   jouer() {
     this.error = null;
     this.lastResult = null;
 
     if (!this.mise || this.mise <= 0) { this.error = 'Mise invalide.'; return; }
+    if (this.currentBalance != null && this.mise > this.currentBalance) { this.error = 'Solde insuffisant.'; return; }
+    if (this.enCours) return; // safeguard
 
-    // disable UI
     this.enCours = true;
     this.spinStartAt = Date.now();
 
-    // start visual spinning animation
     this.startVisualSpin();
 
-    // call backend
     this.game.playSlots({ montant: this.mise }).subscribe({
       next: (res) => {
         this.lastResult = res;
-        // on attend la durée minimale pour que l'utilisateur voie l'animation
         const elapsed = Date.now() - this.spinStartAt;
         const wait = Math.max(0, this.minSpinMs - elapsed);
         setTimeout(() => {
           this.landToResult(res.reels);
-          // refresh balance (SSE ou pull)
           this.wallet.refreshBalance();
         }, wait);
       },
@@ -106,36 +110,94 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
         this.error = err?.error?.error || 'Erreur serveur ou solde insuffisant';
         this.stopAllSpinImmediate();
         this.enCours = false;
+        // si auto-spin était actif, on déclenche la logique de terminaison
+        this.onSpinComplete();
       }
     });
   }
 
-  /** Ajoute la classe spinning aux strips (animation CSS continue) */
+  // ----------------- auto-spin API -----------------
+  startAutoSpin() {
+    if (this.autoSpinActive) return;
+    // validation rapide
+    if (!this.mise || this.mise <= 0) { this.error = 'Mise invalide.'; return; }
+    if (this.currentBalance != null && this.mise > this.currentBalance) { this.error = 'Solde insuffisant pour auto-spin.'; return; }
+
+    // configure remaining spins: null = infini
+    this.remainingAutoSpins = (this.autoSpinCount && this.autoSpinCount > 0) ? Math.floor(this.autoSpinCount) : null;
+    this.autoSpinActive = true;
+
+    // start immediately if possible
+    if (!this.enCours) {
+      this.jouer();
+    }
+    // otherwise onSpinComplete() s'occupera d'enchaîner
+  }
+
+  stopAutoSpin() {
+    this.autoSpinActive = false;
+    this.remainingAutoSpins = null;
+    if (this.autoSpinTimeoutId != null) {
+      clearTimeout(this.autoSpinTimeoutId);
+      this.autoSpinTimeoutId = null;
+    }
+  }
+
+  // appelé systématiquement quand un spin se termine (succès ou erreur)
+  private onSpinComplete() {
+    // si auto-spin pas actif => rien à faire
+    if (!this.autoSpinActive) return;
+
+    // décrémente si on a un compteur
+    if (this.remainingAutoSpins != null) {
+      this.remainingAutoSpins = Math.max(0, this.remainingAutoSpins - 1);
+    }
+
+    // si compteur atteint 0 => stop
+    if (this.remainingAutoSpins === 0) {
+      this.stopAutoSpin();
+      return;
+    }
+
+    // vérifie le solde avant d'enchaîner
+    if (this.currentBalance != null && this.mise > this.currentBalance) {
+      this.stopAutoSpin();
+      this.error = 'Solde insuffisant — auto-spin arrêté.';
+      return;
+    }
+
+    // planifie prochain spin (si auto toujours actif)
+    if (this.autoSpinActive) {
+      if (this.autoSpinTimeoutId != null) clearTimeout(this.autoSpinTimeoutId);
+      this.autoSpinTimeoutId = window.setTimeout(() => {
+        this.autoSpinTimeoutId = null;
+        if (!this.enCours && this.autoSpinActive) {
+          this.jouer();
+        }
+      }, this.autoSpinDelay);
+    }
+  }
+
+  // ----------------- visuals & landing (inchangé mais on appelle onSpinComplete) -----------------
   private startVisualSpin() {
     this.buildReels();
-    // clear any previous timeouts/listeners
     this.clearAllTimers();
     setTimeout(() => {
       this.reelStrips.forEach(elref => {
         const el = elref.nativeElement;
-        // remove inline transform/transition before anim
         el.style.transition = '';
         el.style.transform = '';
-        // add class that triggers CSS animation
         el.classList.add('spinning');
       });
     }, 20);
   }
 
-  /** Stoppe l'animation en cours et positionne chaque reel pour correspondre au résultat */
   private landToResult(resultSymbols: string[]) {
-    // Wait a tick so DOM is stable
     setTimeout(() => {
       const strips = this.reelStrips.toArray();
       const cellHeight = this.getCellHeight();
       const centerOffset = Math.floor((this.visibleCells() / 2)) * cellHeight;
 
-      // cleanup timer fallback (au cas où transitionend ne s'exécute pas) :
       const maxDuration = 1200 + (strips.length - 1) * 200;
       if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout);
       this.cleanupTimeout = setTimeout(() => { this.forceCleanup(); }, maxDuration + 500);
@@ -146,71 +208,78 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
         const stripEl = strips[r].nativeElement as HTMLDivElement;
         lastStripEl = stripEl;
 
-        // find index of the symbol in the last loop (from end)
-        let targetIndexInSeq = -1;
-        for (let idx = this.reels[r].sequence.length - 1; idx >= 0; idx--) {
-          if (this.reels[r].sequence[idx] === targetSym) {
-            targetIndexInSeq = idx;
-            break;
+        // find best occurrence to avoid clamp
+        const seq = this.reels[r].sequence;
+        const seqLen = seq.length || 1;
+        const totalHeight = stripEl.scrollHeight || (cellHeight * seqLen);
+        const realCellHeight = Math.max(20, Math.round(totalHeight / seqLen));
+        const visibleArea = Math.max(1, this.visibleCells()) * realCellHeight;
+        const maxTranslate = Math.max(0, (seqLen * realCellHeight) - visibleArea);
+
+        const candidates: number[] = [];
+        for (let i = 0; i < seqLen; i++) if (seq[i] === targetSym) candidates.push(i);
+        if (candidates.length === 0) candidates.push(Math.floor(Math.random() * seqLen));
+
+        let bestIdx = candidates[0];
+        let bestPenalty = Number.POSITIVE_INFINITY;
+        for (const idx of candidates) {
+          const desiredTranslate = (idx * realCellHeight) - centerOffset;
+          const clamped = Math.min(Math.max(desiredTranslate, 0), maxTranslate);
+          const penalty = Math.abs(clamped - desiredTranslate);
+          if (penalty < bestPenalty || (penalty === bestPenalty && idx > bestIdx)) {
+            bestPenalty = penalty;
+            bestIdx = idx;
           }
         }
-        if (targetIndexInSeq < 0) targetIndexInSeq = Math.floor(Math.random() * this.reels[r].sequence.length);
 
-        // stop CSS loop: remove class then force reflow to "freeze" animation
+        const targetIndexInSeq = bestIdx;
+
         stripEl.classList.remove('spinning');
         // force reflow
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         stripEl.offsetWidth;
 
-        // compute translate so target is centered
-        const translate = (targetIndexInSeq * cellHeight) - centerOffset;
+        let translate = (targetIndexInSeq * realCellHeight) - centerOffset;
+        if (translate < 0) translate = 0;
+        if (translate > maxTranslate) translate = maxTranslate;
 
-        // transition duration (stagger by reel)
         const duration = 900 + r * 200;
         stripEl.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.2,1)`;
         stripEl.style.transform = `translateY(-${translate}px)`;
 
-        // attach transitionend listener on each strip (but final cleanup on last strip)
-        const onEnd = (ev: TransitionEvent) => {
-          // remove listener
-          stripEl.removeEventListener('transitionend', onEnd);
-        };
+        const onEnd = () => { try { stripEl.removeEventListener('transitionend', onEnd); } catch {} };
         stripEl.addEventListener('transitionend', onEnd);
 
-        // also set a per-strip fallback in case transitionend doesn't fire
-        const toId = setTimeout(() => {
-          try { stripEl.removeEventListener('transitionend', onEnd); } catch {}
-        }, duration + 400);
+        const toId = setTimeout(() => { try { stripEl.removeEventListener('transitionend', onEnd); } catch {} }, duration + 400);
         this.transitionTimeouts.push(toId);
       }
 
-      // attach final listener on last strip to re-enable UI
       if (lastStripEl) {
         const finalOnEnd = () => {
-          // clear fallback cleanup
+          try { lastStripEl!.removeEventListener('transitionend', finalOnEnd); } catch {}
           this.clearAllTimers();
-          // small timeout to allow user to see result
-          setTimeout(() => { this.enCours = false; }, 120);
-          lastStripEl!.removeEventListener('transitionend', finalOnEnd);
+          // small delay so player sees result, then mark spin finished
+          setTimeout(() => {
+            this.enCours = false;
+            this.onSpinComplete();
+          }, 120);
         };
         lastStripEl.addEventListener('transitionend', finalOnEnd);
 
-        // ensure fallback cleanup after expected duration
         const finalTimeout = setTimeout(() => {
-          try {
-            lastStripEl!.removeEventListener('transitionend', finalOnEnd);
-          } catch {}
+          try { lastStripEl!.removeEventListener('transitionend', finalOnEnd); } catch {}
           this.forceCleanup();
+          // ensure auto-spin logic still runs even on fallback
+          this.onSpinComplete();
         }, (900 + (strips.length - 1) * 200) + 800);
         this.transitionTimeouts.push(finalTimeout);
       } else {
-        // pas de strips trouvés -> cleanup immédiat
         this.forceCleanup();
+        this.onSpinComplete();
       }
     }, 40);
   }
 
-  /** Removes spinning classes and inline transitions (immediate stop) */
   private stopAllSpinImmediate() {
     this.reelStrips.forEach(elref => {
       const el = elref.nativeElement;
@@ -221,7 +290,6 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   }
 
   private forceCleanup() {
-    // stop all animation classes and inline transitions
     this.reelStrips.forEach(elref => {
       const el = elref.nativeElement;
       el.classList.remove('spinning');
@@ -235,6 +303,7 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     if (this.cleanupTimeout) { clearTimeout(this.cleanupTimeout); this.cleanupTimeout = null; }
     this.transitionTimeouts.forEach(t => clearTimeout(t));
     this.transitionTimeouts = [];
+    if (this.autoSpinTimeoutId != null) { clearTimeout(this.autoSpinTimeoutId); this.autoSpinTimeoutId = null; }
   }
 
   private getCellHeight(): number {
@@ -253,5 +322,6 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     this.sub?.unsubscribe();
     this.configSub?.unsubscribe();
     this.clearAllTimers();
+    this.stopAutoSpin();
   }
 }
