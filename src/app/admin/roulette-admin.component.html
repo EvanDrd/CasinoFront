@@ -1,0 +1,30 @@
+<div style="max-width:900px;margin:20px auto;padding:12px;border:1px solid #eee;border-radius:8px;">
+  <h2>Administration Roulette — Probabilités</h2>
+
+  <p>
+    Définis un poids (entier > 0) pour chaque numéro ; un poids plus élevé augmente la probabilité relative.
+    Laisse à 0 si tu veux exclure un numéro.
+  </p>
+
+  <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+    <thead>
+    <tr><th style="text-align:left">Numéro</th><th style="text-align:left">Poids</th></tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let n of numbers">
+      <td style="padding:6px;border-top:1px solid #eee">{{ n }}</td>
+      <td style="padding:6px;border-top:1px solid #eee">
+        <input type="number" min="0" [(ngModel)]="weights[n]" style="width:80px;padding:6px;" />
+      </td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:12px;display:flex;gap:8px;">
+    <button (click)="save()" [disabled]="loading" style="padding:8px 12px;background:#1976d2;color:white;border:none;border-radius:6px;">Enregistrer</button>
+    <button (click)="reset()" style="padding:8px 12px;border-radius:6px;border:1px solid #ddd;background:white;">Réinitialiser</button>
+  </div>
+
+  <div *ngIf="message" style="margin-top:10px;color:green">{{ message }}</div>
+  <div *ngIf="error" style="margin-top:10px;color:#b00020">{{ error }}</div>
+</div>

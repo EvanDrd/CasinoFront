@@ -1,104 +1,132 @@
-<div class="roulette-container">
-  <div class="left">
-    <div class="wheel-stage">
-      <div class="wheel-wrapper"
-           [style.width.px]="wheelSizePx"
-           [style.height.px]="wheelSizePx">
+<div class="roulette-layout">
+  <!-- PARTIE MISES (à gauche) -->
+  <div class="bet-controls">
+    <label>Type de pari</label>
+    <select [(ngModel)]="betType">
+      <option value="straight">Numéro</option>
+      <option value="color">Couleur</option>
+      <option value="parity">Pair / Impair</option>
+      <option value="range">1-18 / 19-36</option>
+      <option value="dozen">Douzaine</option>
+    </select>
 
-        <div class="wheel-numbers-container">
-          <div #wheelEl
-               class="wheel-numbers"
-               [class.spinning]="wheelSpinning"
-               [style.transition]="wheelTransition"
-               [style.transform]="'rotate(' + wheelRotation + 'deg)'"
-               [style.width.px]="wheelSizePx"
-               [style.height.px]="wheelSizePx">
-            <div *ngFor="let n of wheelNumbers; let i = index"
-                 class="wheel-number"
-                 [style.transform]="'rotate(' + (i * sectorAngle) + 'deg) translateY(-' + rimRadiusPx + 'px)'">
-        <span class="num-label"
-              [class.red]="isRed(n)"
-              [class.green]="n === 0">
-          {{ n }}
-        </span>
-            </div>
-          </div>
-        </div>
+    <div class="bet-value">
+      <label>Valeur</label>
+      <ng-container [ngSwitch]="betType">
+        <input *ngSwitchCase="'straight'" type="number" min="0" max="36" [(ngModel)]="betValue" />
+        <select *ngSwitchCase="'color'" [(ngModel)]="betValue">
+          <option value="red">Rouge</option>
+          <option value="black">Noir</option>
+        </select>
+        <select *ngSwitchCase="'parity'" [(ngModel)]="betValue">
+          <option value="even">Pair</option>
+          <option value="odd">Impair</option>
+        </select>
+        <select *ngSwitchCase="'range'" [(ngModel)]="betValue">
+          <option value="low">1-18</option>
+          <option value="high">19-36</option>
+        </select>
+        <select *ngSwitchCase="'dozen'" [(ngModel)]="betValue">
+          <option value="1">1 (1-12)</option>
+          <option value="2">2 (13-24)</option>
+          <option value="3">3 (25-36)</option>
+        </select>
+      </ng-container>
+    </div>
 
-        <div class="pointer">▼</div>
-      </div>
+    <div class="bet-amount">
+      <label>Mise</label>
+      <input type="number" [(ngModel)]="montant" min="1" />
+    </div>
 
-
-      <div class="controls">
-      <label>Type de pari</label>
-      <select [(ngModel)]="betType">
-        <option value="straight">Numéro (straight)</option>
-        <option value="color">Couleur (red/black)</option>
-        <option value="parity">Pair / Impair</option>
-        <option value="range">1-18 / 19-36</option>
-        <option value="dozen">Douzaine (1/2/3)</option>
-      </select>
-
-      <div class="bet-value">
-        <label>Valeur du pari</label>
-        <ng-container [ngSwitch]="betType">
-          <input *ngSwitchCase="'straight'" type="number" min="0" max="36" [(ngModel)]="betValue" />
-          <select *ngSwitchCase="'color'" [(ngModel)]="betValue">
-            <option value="red">red</option>
-            <option value="black">black</option>
-          </select>
-          <select *ngSwitchCase="'parity'" [(ngModel)]="betValue">
-            <option value="even">even</option>
-            <option value="odd">odd</option>
-          </select>
-          <select *ngSwitchCase="'range'" [(ngModel)]="betValue">
-            <option value="low">1-18</option>
-            <option value="high">19-36</option>
-          </select>
-          <select *ngSwitchCase="'dozen'" [(ngModel)]="betValue">
-            <option value="1">1 (1-12)</option>
-            <option value="2">2 (13-24)</option>
-            <option value="3">3 (25-36)</option>
-          </select>
-        </ng-container>
-      </div>
-
-      <div class="bet-amount">
-        <label>Mise</label>
-        <input type="number" [(ngModel)]="montant" min="1" />
-      </div>
-
-      <div class="actions">
-        <button (click)="jouer()" [disabled]="enCours">Placer le pari</button>
+    <button (click)="jouer()" [disabled]="enCours">Placer le pari</button>
+    <div class="auto-spin">
+      <label>Auto-Spin</label>
+      <div>
+        <input type="number" min="1" placeholder="Nb de tours"
+               [(ngModel)]="autoSpinCount" [disabled]="autoSpinActive">
+        <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="autoSpinActive">Lancer</button>
+        <button (click)="startAutoSpin()" [disabled]="autoSpinActive">Infini</button>
+        <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive">Stop</button>
       </div>
     </div>
-  </div>
 
-  <div class="right">
-    <h3>Tableau</h3>
-
-    <div class="grid" *ngIf="betType === 'straight'">
-      <button *ngFor="let n of wheelNumbers"
-              class="num-btn"
-              [class.selected]="selectedNumber === n"
-              (click)="choisirNumero(n)">
-        {{ n }}
-      </button>
-    </div>
 
     <div class="status">
       <p>Solde : <strong>{{ currentBalance ?? '—' }}</strong></p>
-
-      <div *ngIf="lastResult">
-        <p>Dernier tirage : <strong>{{ lastResult.number }}</strong> ({{ lastResult.color }})</p>
-        <p *ngIf="lastResult.win" class="win">Gagné : +{{ lastResult.montantGagne }} crédits</p>
-        <p *ngIf="!lastResult.win" class="lose">Perdu : -{{ lastResult.montantJoue }} crédits</p>
-        <p class="final-phrase">
-          {{ lastResult.win ? ('Bravo — tu as gagné ' + ((lastResult.montantGagne || 0) - (lastResult.montantJoue || 0)) + ' crédits net.') : ('Dommage — tu as perdu ' + (lastResult.montantJoue || 0) + ' crédits.') }}
-        </p>
+      <div *ngIf="resultsHistory.length > 0" class="history">
+        <ul>
+          <li *ngFor="let r of resultsHistory">
+            Numéro : <strong>{{ r.number }}</strong> ({{ r.color }})
+            <span *ngIf="r.win" class="win">+{{ r.montantGagne }}</span>
+            <span *ngIf="!r.win" class="lose">-{{ r.montantJoue }}</span>
+          </li>
+        </ul>
       </div>
 
       <p *ngIf="error" class="error">{{ error }}</p>
     </div>
   </div>
-</div>
+
+  <!-- ZONE ROUE + TABLEAU -->
+  <div class="roulette-main">
+    <!-- ROUE -->
+    <div class="wheel-stage">
+      <div class="wheel-wrapper"
+           [style.width.px]="wheelSizePx"
+           [style.height.px]="wheelSizePx">
+        <div class="wheel-numbers-container">
+          <div #wheelEl
+               class="wheel-numbers"
+               [class.spinning]="wheelSpinning"
+               [style.transition]="wheelTransition"
+               [style.transform]="'rotate(' + wheelRotation + 'deg)'">
+            <div *ngFor="let n of wheelNumbers; let i = index"
+                 class="wheel-number"
+                 [style.transform]="'rotate(' + (i * sectorAngle) + 'deg) translateY(-' + rimRadiusPx + 'px)'">
+              <span class="num-label"
+                    [class.red]="isRed(n)"
+                    [class.green]="n === 0"
+                    [class.black]="!isRed(n) && n !== 0">
+                {{ n }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="pointer">▼</div>
+      </div>
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="bet-table">
+      <div class="table-top">
+        <div class="zero-col">
+          <button class="cell zero" (click)="betType='straight'; betValue='0'; choisirNumero(0)">0</button>
+        </div>
+        <div class="rows">
+          <div class="row" *ngFor="let row of tableRows">
+            <button *ngFor="let n of row"
+                    class="cell num-btn"
+                    [class.red]="isRed(n)"
+                    [class.black]="!isRed(n) && n !== 0"
+                    [class.selected]="selectedNumber === n"
+                    (click)="choisirNumero(n); betType='straight'; betValue = ''+n">
+              {{ n }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="dozens">
+        <button class="cell dozen" (click)="betType='dozen'; betValue='1'">1 to 12</button>
+        <button class="cell dozen" (click)="betType='dozen'; betValue='2'">13 to 24</button>
+        <button class="cell dozen" (click)="betType='dozen'; betValue='3'">25 to 36</button>
+      </div>
+      <div class="bottom-row">
+        <button class="cell bottom" (click)="betType='range'; betValue='low'">1 to 18</button>
+        <button class="cell bottom" (click)="betType='parity'; betValue='even'">Even</button>
+        <button class="cell bottom red-toggle" (click)="betType='color'; betValue='red'">Red</button>
+        <button class="cell bottom black-toggle" (click)="betType='color'; betValue='black'">Black</button>
+        <button class="cell bottom" (click)="betType='parity'; betValue='odd'">Odd</button>
+        <button class="cell bottom" (click)="betType='range'; betValue='high'">19 to 36</button>
+      </div>
+    </div>

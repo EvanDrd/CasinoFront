@@ -29,5 +29,17 @@ export class RouletteService {
     return this.http.post<RouletteBetResponse>(`${this.base}/roulette`, req);
   }
 
+  updateProbabilities(weights: Record<number, number>): Observable<any> {
+    return this.http.post(`${this.base}/roulette/probabilities`, weights);
+  }
+
+  getProbabilities(): Observable<{weights: Record<number, number> | null}> {
+    return this.http.get<{weights: Record<number, number> | null}>(`${this.base}/roulette/probabilities`);
+  }
+
+  resetProbabilities(): Observable<any> {
+    return this.http.delete(`${this.base}/roulette/probabilities`);
+  }
+
   // get bias or other endpoints later
 }
