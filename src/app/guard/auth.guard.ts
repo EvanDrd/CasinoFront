@@ -9,12 +9,15 @@ export class AuthGuard implements CanActivate {
 
   constructor(private authService: AuthService, private router: Router) {}
 
+  // src/app/guard/auth.guard.ts (extrait)
   canActivate(): boolean {
     if (this.authService.isLoggedIn()) {
-      return true; // ✅ utilisateur connecté, accès autorisé
+      return true;
     } else {
-      this.router.navigate(['/login']); // ❌ redirection vers login
+      // redirige vers /home (où le header propose le login)
+      this.router.navigate(['/home']);
       return false;
     }
   }
+
 }

@@ -1,0 +1,49 @@
+<!-- src/app/header/header.component.html -->
+<header style="padding:12px; background:#222; color:#fff; display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <h1 style="margin:0; font-size:1.1rem;">Mon Casino</h1>
+    <small style="color:#ddd;">— amuse-toi bien</small>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;">
+    <!-- si connecté : affichage pseudo + solde + logout -->
+    <ng-container *ngIf="isLoggedIn(); else showLogin">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="color:#fff;display:flex;flex-direction:column;align-items:flex-end;">
+          <small style="color:#ddd;">Connecté·e en tant que</small>
+          <strong>{{ userObj?.pseudo || userObj?.email }}</strong>
+        </div>
+
+        <!-- solde (composant réutilisé) -->
+        <app-balance-header></app-balance-header>
+
+        <button (click)="logout()" style="padding:8px 10px;border-radius:6px;border:none;background:#e53935;color:white;cursor:pointer;">
+          Se déconnecter
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- login rapide dans le header quand non connecté -->
+    <ng-template #showLogin>
+      <form (ngSubmit)="submitLogin()" style="display:flex;gap:8px;align-items:center;">
+        <input [(ngModel)]="email" name="email" type="email" placeholder="email"
+               style="padding:6px;border-radius:6px;border:1px solid #444;background:#fff;color:#000;width:180px;" />
+        <input [(ngModel)]="motDePasse" name="motDePasse" type="password" placeholder="mot de passe"
+               style="padding:6px;border-radius:6px;border:1px solid #444;background:#fff;color:#000;width:140px;" />
+        <button type="submit" [disabled]="loading"
+                style="padding:8px 10px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
+          {{ loading ? 'Connexion…' : 'Se connecter' }}
+        </button>
+
+        <button type="button" (click)="router.navigate(['/register'])"
+                style="padding:8px 10px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">
+          S'inscrire
+        </button>
+      </form>
+
+      <div *ngIf="error" style="color:#ffb3b3;margin-left:12px;">
+        {{ error }}
+      </div>
+    </ng-template>
+  </div>
+</header>
