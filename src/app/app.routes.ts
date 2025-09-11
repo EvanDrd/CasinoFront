@@ -4,6 +4,7 @@ import { HomeComponent } from './home/home.component';
 import { AuthGuard } from './guard/auth.guard';
 import { GuestGuard } from './guard/guest.guard';
 import { AdminGuard } from './guard/admin.guard';
+import {GameHistoryComponent} from './history/game-history.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -20,6 +21,10 @@ export const routes: Routes = [
   { path: 'admin/coinflip', loadComponent: () => import('./admin/coinflip-admin.component').then(m => m.CoinflipAdminComponent), canActivate: [AuthGuard, AdminGuard] },
   { path: 'admin/slots', loadComponent: () => import('./admin/slots-admin.component').then(m => m.SlotsAdminComponent), canActivate: [AuthGuard, AdminGuard] },
   { path: 'admin/roulette', loadComponent: () => import('./admin/roulette-admin.component').then(m => m.RouletteAdminComponent), canActivate: [AuthGuard, AdminGuard] },
+
+  // historique
+  { path: 'history', component: GameHistoryComponent, canActivate: [AuthGuard] },
+
 
   // fallback
   { path: '**', redirectTo: 'home' }
