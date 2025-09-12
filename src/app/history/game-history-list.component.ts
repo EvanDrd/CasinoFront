@@ -45,18 +45,17 @@ export class GameHistoryListComponent implements OnInit, OnDestroy {
     this.sub = this.svc.entriesObservable$.subscribe(list => {
       if (!this.game) {
         this.items = list.slice(0, this.limit);
-        this.loading = false;
       } else {
-        // if filtering by game, fetch server filtered list (keeps it accurate)
-        this.loading = true;
-        this.svc.getMyHistoryByGame(this.game, this.limit).subscribe({
-          next: res => { this.items = res ?? []; this.loading = false; },
-          error: () => { this.items = []; this.loading = false; }
-        });
+        this.items = list.filter(i => i.game === this.game).slice(0, this.limit);
       }
+      this.loading = false;
     });
-    // initial population
-    this.svc.refresh();
+
+    if (this.game) {
+      this.svc.prependFromServerForGame(this.game, this.limit);
+    } else {
+      this.svc.refresh();
+    }
   }
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
