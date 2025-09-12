@@ -1,14 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CoinflipService } from '../../services/game/coinflip.service';
 import { WalletService } from '../../services/wallet.service';
-import {RouterLink} from '@angular/router';
+import { GameHistoryListComponent } from '../../history/game-history-list.component';
+import { HistoryService } from '../../services/history/history.service';
 
 @Component({
   selector: 'app-coinflip',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, GameHistoryListComponent],
   templateUrl: './coinflip.component.html',
   styleUrls: ['./coinflip.component.css']
 })
@@ -22,7 +24,11 @@ export class CoinflipComponent {
   currentBalance: number | null = null;
   maxBet = 1000000;
 
-  constructor(private game: CoinflipService, private wallet: WalletService) {
+  constructor(
+    private game: CoinflipService,
+    private wallet: WalletService,
+    private history: HistoryService
+  ) {
     this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
   }
 
@@ -45,6 +51,15 @@ export class CoinflipComponent {
         this.lastResult = res;
         this.message = res.win ? 'Bravo !' : 'Dommage.';
         this.wallet.refreshBalance();
+        const entry = {
+          game: 'coinflip',
+          outcome: `choice=${this.choix},outcome=${res.outcome}`,
+          montantJoue: (res.montantJoue ?? this.mise),
+          montantGagne: (res.montantGagne ?? 0),
+          multiplier: (res.montantJoue ? ((res.montantGagne ?? 0) / res.montantJoue) : (res.win ? 2 : 0)),
+          createdAt: new Date().toISOString()
+        };
+        this.history.pushLocal(entry);
         this.enCours = false;
       },
       error: (err) => {
