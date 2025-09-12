@@ -14,13 +14,24 @@ import { Subscription } from 'rxjs';
       <div *ngIf="loading">Chargement...</div>
       <div *ngIf="!loading && items.length === 0">Aucune partie récente.</div>
       <ul *ngIf="!loading && items.length > 0" style="list-style:none;padding:0;margin:0;">
-        <li *ngFor="let it of items" style="padding:8px 0;border-top:1px solid #f6f6f6;">
+        <li *ngFor="let it of items" style="padding:10px 0;border-top:1px solid #f6f6f6;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-weight:600">{{ it.game | uppercase }}</div>
-              <div style="font-size:0.9rem;color:#666">{{ it.outcome ? it.outcome : '—' }} • {{ it.createdAt | date:'short' }}</div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div *ngIf="formatOutcome(it) as fo" style="display:flex;align-items:center;gap:10px;">
+                <span *ngIf="fo.number!=null" [style.background]="colorFor(fo.color)" style="display:inline-flex;width:36px;height:36px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:700;">
+                  {{ fo.number }}
+                </span>
+                <div>
+                  <div style="font-weight:600">{{ it.game | uppercase }} • {{ fo.label }}</div>
+                  <div style="font-size:0.9rem;color:#666">{{ it.createdAt | date:'short' }}</div>
+                </div>
+              </div>
+              <div *ngIf="!formatOutcome(it)">
+                <div style="font-weight:600">{{ it.game | uppercase }}</div>
+                <div style="font-size:0.9rem;color:#666">{{ it.createdAt | date:'short' }}</div>
+              </div>
             </div>
-            <div style="text-align:right">
+            <div style="text-align:right;min-width:120px">
               <div [style.color]="it.montantGagne>0 ? 'green' : '#b00020'">{{ it.montantGagne > 0 ? '+' + it.montantGagne : '-' + it.montantJoue }}</div>
               <div style="font-size:0.85rem;color:#666">x{{ it.multiplier ? (it.multiplier | number:'1.2-2') : '—' }}</div>
             </div>
@@ -49,4 +60,34 @@ export class HistoryWidgetComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
+
+  formatOutcome(it: HistoryEntry) {
+    if (!it || !it.outcome) return null;
+    const o = it.outcome;
+    if (it.game === 'roulette') {
+      const map: Record<string,string> = {};
+      o.split(',').forEach(p => {
+        const [k,v] = p.split('=');
+        if (v !== undefined) map[k.trim()] = v.trim();
+      });
+      const num = map['number'] ? Number(map['number']) : (/\b\d+\b/.exec(o) ? Number(/\b\d+\b/.exec(o)![0]) : null);
+      const color = (map['color'] ?? (o.includes('red') ? 'red' : o.includes('black') ? 'black' : o.includes('green') ? 'green' : null));
+      const label = num != null ? `${color ? capitalize(color) : ''}`.trim() : o;
+      return { number: num, color, label: num != null ? `${num} ${color ? '(' + capitalize(color) + ')' : ''}`.trim() : o };
+    }
+    if (it.game === 'coinflip') {
+      return { number: null, color: null, label: o.toUpperCase() };
+    }
+    return { number: null, color: null, label: o };
+  }
+
+  colorFor(c?: string|null) {
+    if (!c) return '#666';
+    if (c === 'red') return '#d32f2f';
+    if (c === 'black') return '#212121';
+    if (c === 'green') return '#2e7d32';
+    return '#666';
+  }
 }
+
+function capitalize(s: string|null|undefined) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }

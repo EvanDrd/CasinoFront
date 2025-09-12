@@ -54,19 +54,38 @@
 
     <div class="status">
       <p>Solde : <strong>{{ currentBalance ?? '—' }}</strong></p>
-      <div *ngIf="resultsHistory.length > 0" class="history">
-        <ul>
-          <li *ngFor="let r of resultsHistory">
-            Numéro : <strong>{{ r.number }}</strong> ({{ r.color }})
-            <span *ngIf="r.win" class="win">+{{ r.montantGagne }}</span>
-            <span *ngIf="!r.win" class="lose">-{{ r.montantJoue }}</span>
-          </li>
-        </ul>
+
+      <div *ngIf="lastResult" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+        <div [style.background]="colorFor(lastResult.color)"
+             style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:20px;">
+          {{ lastResult.number }}
+        </div>
+
+        <div>
+          <div style="font-weight:700">
+            {{ lastResult.number }}
+            <small style="color:#666;text-transform:capitalize;margin-left:8px;">{{ lastResult.color }}</small>
+          </div>
+
+          <div *ngIf="lastResult.win" style="color:green;margin-top:6px;">
+            Gagné +{{ lastResult.montantGagne }}
+          </div>
+          <div *ngIf="!lastResult.win" style="color:#b00020;margin-top:6px;">
+            Perdu -{{ lastResult.montantJoue }}
+          </div>
+
+          <div style="color:#666;margin-top:6px;">
+            Multiplicateur : <strong>{{ resultMultiplier(lastResult) ?? '—' }}</strong>
+          </div>
+        </div>
       </div>
 
-      <p *ngIf="error" class="error">{{ error }}</p>
+      <div *ngIf="!lastResult" style="color:#666;margin-top:8px;">Aucun spin récent</div>
+
+      <p *ngIf="error" class="error" style="margin-top:8px">{{ error }}</p>
     </div>
-   <app-game-history-list [game]="'roulette'" [limit]="5"></app-game-history-list>
+
+    <app-game-history-list [game]="'roulette'" [limit]="5"></app-game-history-list>
 
   </div>
 

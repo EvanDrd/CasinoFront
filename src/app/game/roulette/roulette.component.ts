@@ -60,7 +60,7 @@ export class RouletteComponent implements OnDestroy {
 
   jouer(autoTrigger = false) {
     this.error = null;
-    this.lastResult = null;
+    // ne plus réinitialiser this.lastResult ici -> on garde l'affichage du dernier spin pendant l'animation
     if (this.betType !== 'straight') this.selectedNumber = null;
     if (!this.montant || this.montant <= 0) { this.error = 'Mise invalide'; return; }
     if (!this.betType || this.betValue == null) { this.error = 'Pari invalide'; return; }
@@ -92,7 +92,7 @@ export class RouletteComponent implements OnDestroy {
 
         const totalMs = 5200;
         setTimeout(() => {
-          this.lastResult = res;
+          this.lastResult = res; // on met à jour ici seulement, après la chute de la roue
           this.resultsHistory.unshift(res);
           if (this.resultsHistory.length > 20) this.resultsHistory.pop();
           this.enCours = false;
@@ -123,11 +123,28 @@ export class RouletteComponent implements OnDestroy {
         this.enCours = false;
         this.wheelSpinning = false;
         this.lastSpinFinished = true;
+        // ne pas effacer lastResult en cas d'erreur pour conserver l'affichage du dernier spin réussi
         this.stopAutoSpin();
       }
     });
   }
 
+
   startAutoSpin(count?: number) { this.autoSpinActive = true; this.autoSpinCount = count ?? null; if (this.lastSpinFinished) this.jouer(true); }
+
+  resultMultiplier(res: RouletteBetResponse | null): number | null {
+    if (!res) return null;
+    if (!res.montantJoue || res.montantJoue === 0) return null;
+    return Math.round((res.montantGagne / res.montantJoue) * 100) / 100;
+  }
+
+  colorFor(c?: string | null): string {
+    if (!c) return '#666';
+    if (c === 'red') return '#d32f2f';
+    if (c === 'black') return '#212121';
+    if (c === 'green') return '#2e7d32';
+    return '#666';
+  }
+
   stopAutoSpin() { this.autoSpinActive = false; this.autoSpinCount = null; }
 }
