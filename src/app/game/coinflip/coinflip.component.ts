@@ -24,11 +24,10 @@ export class CoinflipComponent {
   currentBalance: number | null = null;
   maxBet = 1000000;
   minBet = 100;
-
-  // AJOUT: états/variables d’animation
-  resolutionEnCours = false;               // vrai au moment où on “résout” vers la face cible
-  targetRot: string = '0deg';              // angle final CSS (ex: '1980deg')
-  rotateDuration: string = '950ms';        // durée de rotation pour la résolution
+  resolutionEnCours = false;
+  targetRot: string = '0deg';
+  rotateDuration: string = '950ms';
+  baseRotDeg: number = 0;
 
   constructor(
     private game: CoinflipService,
@@ -38,7 +37,6 @@ export class CoinflipComponent {
     this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
   }
 
-  // AJOUT: utilitaire pour un entier aléatoire inclusif
   private randInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -46,9 +44,7 @@ export class CoinflipComponent {
   jouer() {
     this.error = null;
     this.message = null;
-    this.lastResult = null;
 
-    // Validation mise minimale (déjà en place)
     if (!this.mise || this.mise < this.minBet) {
       this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`;
       return;
@@ -59,26 +55,24 @@ export class CoinflipComponent {
       return;
     }
 
-    // MODIF: active l’état “en-attente” (rotation continue + flottement)
     this.enCours = true;
-    this.resolutionEnCours = false;     // on attend le résultat
-    this.targetRot = '0deg';            // on repart d’un état neutre (l’anim d’attente tourne en continu)
-    this.rotateDuration = '950ms';      // durée par défaut
+    this.resolutionEnCours = false;
+    this.rotateDuration = '950ms';
 
     this.game.jouerPiece({ choix: this.choix, montant: this.mise }).subscribe({
       next: (res) => {
-        // On a le résultat → on construit un angle final qui finit sur la bonne face
-        // PILE = 0°, FACE = 180°, + N tours complets pour l’effet “wow”
-        const base = (res.outcome === 'face') ? 180 : 0; // AJOUT
-        const tours = this.randInt(6, 10);               // AJOUT: nombre de tours complets
-        const totalDeg = base + tours * 360;             // AJOUT: angle final
-        this.targetRot = `${totalDeg}deg`;               // AJOUT: injection CSS variable
-        this.rotateDuration = `${this.randInt(800, 1100)}ms`; // AJOUT: durée un peu aléatoire pour naturel
+        const base = (res.outcome === 'face') ? 180 : 0;
 
-        // Lance la phase de “résolution” (arc + rotation vers la face cible)
-        this.resolutionEnCours = true;                   // AJOUT
+        // on met la base tout de suite pour que l'état visuel de départ soit correct
+        this.baseRotDeg = base;
 
-        // On met aussi à jour les infos de jeu (inchangé)
+        const tours = this.randInt(6, 10);
+        const totalDeg = base + tours * 360;
+        this.targetRot = `${totalDeg}deg`;
+        this.rotateDuration = `${this.randInt(800, 1100)}ms`;
+
+        this.resolutionEnCours = true;
+
         this.lastResult = res;
         this.message = res.win ? 'Bravo !' : 'Dommage.';
         this.wallet.refreshBalance();
@@ -92,18 +86,18 @@ export class CoinflipComponent {
         };
         this.history.pushLocal(entry);
 
-        // AJOUT: on relâche l’état "en cours" après la fin des animations
-        // (durée ~ max(arc 680ms, rotation ~950ms) + marge)
         const totalAnimMs = Math.max(680, parseInt(this.rotateDuration)) + 120;
         setTimeout(() => {
           this.enCours = false;
           this.resolutionEnCours = false;
+          // garder baseRotDeg à la valeur finale (0 ou 180) pour le rendu statique
+          this.baseRotDeg = base;
         }, totalAnimMs);
       },
       error: (err) => {
         this.error = err?.error?.error || 'Erreur serveur ou solde insuffisant';
         this.enCours = false;
-        this.resolutionEnCours = false; // AJOUT: on stoppe toute anim en cas d’erreur
+        this.resolutionEnCours = false;
       }
     });
   }
