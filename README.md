@@ -1,5 +1,34 @@
 # CasinoFront
 
+
+ajout de bouton mdp oublié
+
+revoir la fonctonnalité de gain de credit par heure.( bouton reclamer, chaque jour on clic sur un cadeau)
+
+
+ajout du BJ
+
+apres l'ajout du BJ, harmonisation de toutes les pages html/css, puis mise en prod.
+
+
+(ajout liste ami)
+
+modification dans lhistorique de issue/detail/jeu.
+
+acces au page de jeu sans besoin de connexion( mais pas possible de jouer)
+
+augmenter delai animation piece pile ou face
+
+machine a sous: modifier laffichage du resultat final, on voit dabord dans lhistorique avant la fin dans la machine
+
+ajout dautres machine a sous avec bonus/connexions.
+
+
+
+
+
+
+
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.6.
 
 ## Development server
