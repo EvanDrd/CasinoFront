@@ -51,6 +51,13 @@
       </div>
     </div>
 
+    <!-- BOUTON RETOUR -->
+    <button [routerLink]="['/home']"
+            style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
+      Retour
+    </button>
+
+
 
     <div class="status">
       <p>Solde : <strong>{{ currentBalance ?? '—' }}</strong></p>

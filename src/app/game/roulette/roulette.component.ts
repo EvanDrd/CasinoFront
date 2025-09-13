@@ -6,11 +6,12 @@ import { WalletService } from '../../services/wallet.service';
 import { Subscription } from 'rxjs';
 import { GameHistoryListComponent } from '../../history/game-history-list.component';
 import { HistoryService } from '../../services/history/history.service';
+import {RouterLink} from '@angular/router';
 
 @Component({
   selector: 'app-roulette',
   standalone: true,
-  imports: [CommonModule, FormsModule, GameHistoryListComponent],
+  imports: [CommonModule, FormsModule, GameHistoryListComponent, RouterLink],
   templateUrl: './roulette.component.html',
   styleUrls: ['./roulette.component.css']
 })
