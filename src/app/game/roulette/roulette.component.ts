@@ -40,6 +40,8 @@ export class RouletteComponent implements OnDestroy {
   autoSpinCount: number | null = null;
   private autoSpinTimer: any;
   private lastSpinFinished = true;
+  minBet = 100;
+
 
   constructor(
     private game: RouletteService,
@@ -64,6 +66,11 @@ export class RouletteComponent implements OnDestroy {
     // ne plus réinitialiser this.lastResult ici -> on garde l'affichage du dernier spin pendant l'animation
     if (this.betType !== 'straight') this.selectedNumber = null;
     if (!this.montant || this.montant <= 0) { this.error = 'Mise invalide'; return; }
+    // AJOUT: validation sur la mise minimale
+    if (!this.montant || this.montant < this.minBet) {
+      this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`;
+      return;
+    }
     if (!this.betType || this.betValue == null) { this.error = 'Pari invalide'; return; }
     if (this.enCours) return;
 

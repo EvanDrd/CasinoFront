@@ -1,18 +1,28 @@
 <div class="slot-wrap" style="max-width:920px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
   <h2>Machine à sous</h2>
 
+
+
   <div style="margin:16px 0;">
     <small>Solde actuel: <strong>{{ currentBalance ?? '—' }}</strong></small>
   </div>
 
+  <!-- Rappel mise minimale -->
+  <p style="margin:6px 0 12px 0;color:#666;">
+    <small>Mise minimale : <strong>{{ minBet }}</strong> crédits.</small>
+  </p>
+
+
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
         <label style="min-width:90px;">Mise (crédits)</label>
-        <input type="number" [(ngModel)]="mise" min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
+        <input type="number" [(ngModel)]="mise" [attr.min]="minBet"  min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
+
 
         <!-- Spin bouton largeur fixe -->
         <button (click)="jouer()" [disabled]="enCours" class="spin-btn" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
             {{ enCours ? 'Spinning…' : 'Spin' }}
         </button>
+
 
         <!-- Auto-spin count -->
         <label style="margin-left:6px;">Nombre d'autospins</label>

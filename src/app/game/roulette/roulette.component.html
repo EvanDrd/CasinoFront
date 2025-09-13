@@ -1,6 +1,7 @@
 <div class="roulette-layout">
   <!-- PARTIE MISES (à gauche) -->
   <div class="bet-controls">
+
     <label>Type de pari</label>
     <select [(ngModel)]="betType">
       <option value="straight">Numéro</option>
@@ -39,14 +40,20 @@
       <input type="number" [(ngModel)]="montant" min="1" />
     </div>
 
-    <button (click)="jouer()" [disabled]="enCours">Placer le pari</button>
+    <!-- Rappel mise minimale -->
+    <p style="margin:6px 0 12px 0;color:#666;">
+      <small>Mise minimale : <strong>{{ minBet }}</strong> crédits.</small>
+    </p>
+
+
+    <button (click)="jouer()"  [disabled]="enCours || !montant || montant < minBet">Placer le pari</button>
     <div class="auto-spin">
       <label>Auto-Spin</label>
       <div>
         <input type="number" min="1" placeholder="Nb de tours"
                [(ngModel)]="autoSpinCount" [disabled]="autoSpinActive">
-        <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="autoSpinActive">Lancer</button>
-        <button (click)="startAutoSpin()" [disabled]="autoSpinActive">Infini</button>
+        <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="autoSpinActive || montant<minBet">Lancer</button>
+        <button (click)="startAutoSpin()" [disabled]="autoSpinActive || montant<minBet">Infini</button>
         <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive">Stop</button>
       </div>
     </div>

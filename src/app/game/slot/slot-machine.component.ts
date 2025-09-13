@@ -19,6 +19,7 @@ interface ReelModel { sequence: string[]; }
 })
 export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   mise: number = 100;
+  minBet = 100;
   enCours = false;
   error: string | null = null;
   lastResult: SlotPlayResponse | null = null;
@@ -78,6 +79,11 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     this.error = null;
     this.lastResult = null;
     if (!this.mise || this.mise <= 0) { this.error = 'Mise invalide.'; return; }
+    // AJOUT: validation sur la mise minimale
+    if (this.mise < this.minBet) {
+      this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`;
+      return;
+    }
     if (this.currentBalance != null && this.mise > this.currentBalance) { this.error = 'Solde insuffisant.'; return; }
     if (this.enCours) return;
 

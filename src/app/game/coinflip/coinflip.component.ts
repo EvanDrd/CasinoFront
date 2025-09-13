@@ -23,7 +23,6 @@ export class CoinflipComponent {
   lastResult: any = null;
   currentBalance: number | null = null;
   maxBet = 1000000;
-
   minBet = 100;
 
   constructor(
