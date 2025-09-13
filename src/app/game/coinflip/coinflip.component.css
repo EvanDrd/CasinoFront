@@ -1,3 +1,4 @@
+/* Conteneur général */
 .container {
   max-width: 640px;
   margin: 20px auto;
@@ -6,78 +7,143 @@
   border-radius: 8px;
 }
 
+/* --- ANIMATION AMÉLIORÉE DU LANCER DE PIÈCE (rotation verticale) --- */
+
 .coin-stage {
   perspective: 1000px;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 160px;
+  height: 180px; /* un peu plus haut pour l’arc */
+  position: relative; /* pour l’ombre */
   margin-bottom: 20px;
 }
 
+/* Wrapper d’animation : arc + ombre */
+.coin-anim {
+  position: relative;
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Pièce (3D) */
 .coin {
   width: 120px;
   height: 120px;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform 1s ease;
+  border-radius: 50%;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.20),
+    inset 0 0 0 4px rgba(255,255,255,0.1);
+  will-change: transform;
 }
 
-.coin.spinning {
-  animation: spin 0.001s linear infinite;
-}
-
+/* Faces */
 .face {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   border-radius: 50%;
   backface-visibility: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-weight: bold;
+  font-weight: 800;
   font-size: 20px;
-  color: white;
+  color: #fff;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.3);
 }
 
+/* PILE */
 .front {
-  background: #1976d2;
+  background: linear-gradient(145deg, #2196f3, #1565c0);
 }
 
+/* FACE — CHANGEMENT: rotation sur l'axe X */
 .back {
-  background: #e53935;
-  transform: rotateY(180deg);
+  background: linear-gradient(145deg, #ef5350, #c62828);
+  transform: rotateX(180deg); /* <- au lieu de rotateY */
 }
 
-.coin.show-pile { transform: rotateY(0deg); }
-.coin.show-face { transform: rotateY(180deg); }
-
-@keyframes spin {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
+/* Éclat */
+.face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), transparent 55%);
+  pointer-events: none;
 }
 
-.form-block {
-  margin-bottom: 12px;
+/* (facultatif) états show-pile/face si jamais utilisés ailleurs */
+.coin.show-pile { transform: rotateX(0deg); }    /* <- vertical */
+.coin.show-face { transform: rotateX(180deg); }  /* <- vertical */
+
+/* ÉTAT 1 : attente → rotation continue VERTICALE + flottement */
+.en-attente .coin {
+  animation: coin-wait-rot 480ms linear infinite;
+}
+.en-attente {
+  animation: coin-bob 800ms ease-in-out infinite;
 }
 
-.actions button {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #1976d2;
-  color: white;
-  border: none;
-  cursor: pointer;
+/* CHANGEMENT: rotation sur l'axe X */
+@keyframes coin-wait-rot {
+  from { transform: rotateX(0deg); }
+  to   { transform: rotateX(360deg); }
 }
 
-.result-box {
-  margin-top: 14px;
-  padding: 10px;
-  border-radius: 6px;
-  background: #f7f7f7;
+@keyframes coin-bob {
+  0%   { transform: translateY(0) scale(1); }
+  50%  { transform: translateY(-12px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
 }
 
+.en-attente .shadow {
+  animation: shadow-bob 800ms ease-in-out infinite;
+}
+@keyframes shadow-bob {
+  0%,100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+  50%     { transform: translateX(-50%) scale(0.9); opacity: 0.55; }
+}
+
+/* ÉTAT 2 : résolution → arc + rotation vers la face cible */
+.en-resolution {
+  animation: coin-throw 680ms cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+/* CHANGEMENT: la rotation finale se fait sur rotateX */
+.en-resolution .coin {
+  animation: coin-resolve-rot var(--rot-dur, 950ms) cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+.en-resolution .shadow {
+  animation: coin-shadow 680ms ease-in-out forwards;
+}
+
+/* Arc du lancer */
+@keyframes coin-throw {
+  0%   { transform: translateY(0) scale(1); }
+  45%  { transform: translateY(-85px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* CHANGEMENT: rotation verticale via variable CSS */
+@keyframes coin-resolve-rot {
+  from { transform: rotateX(0deg); }
+  to   { transform: rotateX(var(--target-rot, 1440deg)); }
+}
+
+/* Ombre pendant l’arc */
+@keyframes coin-shadow {
+  0%   { transform: translateX(-50%) scale(1);   opacity: .7; }
+  45%  { transform: translateX(-50%) scale(0.85); opacity: .5; }
+  100% { transform: translateX(-50%) scale(1);   opacity: .75; }
+}
+
+/* Divers */
+.form-block { margin-bottom: 12px; }
+.result-box { margin-top: 14px; padding: 10px; border-radius: 6px; background: #f7f7f7; }
 .win { color: green; }
-.lose { color: #b00020; }
-.error { color: #b00020; }
+.lose, .error { color: #b00020; }
