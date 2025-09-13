@@ -2,7 +2,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { WalletService } from '../services/wallet.service';
 import { BalanceHeaderComponent } from './balance-header.component';
@@ -10,7 +10,7 @@ import { BalanceHeaderComponent } from './balance-header.component';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, FormsModule, BalanceHeaderComponent],
+  imports: [CommonModule, FormsModule, BalanceHeaderComponent, RouterLink],
   templateUrl: './header.component.html'
 })
 export class HeaderComponent {
