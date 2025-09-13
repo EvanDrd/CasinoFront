@@ -24,6 +24,8 @@ export class CoinflipComponent {
   currentBalance: number | null = null;
   maxBet = 1000000;
 
+  minBet = 100;
+
   constructor(
     private game: CoinflipService,
     private wallet: WalletService,
@@ -36,10 +38,13 @@ export class CoinflipComponent {
     this.error = null;
     this.message = null;
     this.lastResult = null;
-    if (!this.mise || this.mise <= 0) {
-      this.error = 'Mise invalide.';
+
+    // AJOUT: validation sur la mise minimale
+    if (!this.mise || this.mise < this.minBet) {
+      this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`;
       return;
     }
+
     if (!this.choix) {
       this.error = 'Choix requis.';
       return;
