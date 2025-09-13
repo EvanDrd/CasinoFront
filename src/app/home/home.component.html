@@ -1,4 +1,4 @@
-<!-- home.component.html -->
+<!-- src/app/home/home.component.html -->
 <div class="home-container" style="max-width:900px;margin:32px auto;padding:20px;">
   <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <div>
@@ -15,12 +15,22 @@
 
     <!-- Catalogue des jeux -->
     <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px;">
+
       <!-- Card: Pile ou Face -->
       <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
+        <!-- Logo au-dessus du titre -->
+        <figure style="margin:0 0 12px 0;display:flex;justify-content:center;">
+          <a [routerLink]="['/play/coinflip']" style="display:inline-block;">
+            <img src="assets/images/logo-coinflip.png" alt="Logo Pile ou Face"
+                 style="width:128px;height:128px;object-fit:contain;cursor:pointer;">
+          </a>
+        </figure>
+
         <div>
           <h3 style="margin:0 0 6px 0;">Pile ou Face</h3>
           <p style="margin:0;color:#666">Mise simple — 2× payout si tu gagnes. Choisis pile ou face.</p>
         </div>
+
         <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
           <button [routerLink]="['/play/coinflip']"
                   style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
@@ -29,10 +39,21 @@
         </div>
       </article>
 
-      <!-- Card: Roulette (stub) -->
-      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;">
-        <h3 style="margin:0 0 6px 0;">Roulette (bientôt)</h3>
-        <p style="margin:0;color:#666">Modes de mise variés — en développement.</p>
+      <!-- Card: Roulette -->
+      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
+        <!-- Logo au-dessus du titre -->
+        <figure style="margin:0 0 12px 0;display:flex;justify-content:center;">
+          <a [routerLink]="['/play/roulette']" style="display:inline-block;">
+            <img src="assets/images/logo-roulette.png" alt="Logo Roulette"
+                 style="width:128px;height:128px;object-fit:contain;cursor:pointer;">
+          </a>
+        </figure>
+
+        <div>
+          <h3 style="margin:0 0 6px 0;">Roulette (bientôt)</h3>
+          <p style="margin:0;color:#666">Modes de mise variés — en développement.</p>
+        </div>
+
         <div style="margin-top:12px;display:flex;justify-content:flex-end;">
           <button [routerLink]="['/play/roulette']"
                   style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
@@ -41,17 +62,29 @@
         </div>
       </article>
 
-      <!-- Card: Machine à sous (stub) -->
-      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;">
-        <h3 style="margin:0 0 6px 0;">Machine à sous</h3>
-        <p style="margin:0;color:#666">Jackpots & lignes — en développement.</p>
+      <!-- Card: Machine à sous -->
+      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
+        <!-- Logo au-dessus du titre -->
+        <figure style="margin:0 0 12px 0;display:flex;justify-content:center;">
+          <a [routerLink]="['/play/slots']" style="display:inline-block;">
+            <img src="assets/images/logo-slot.png" alt="Logo Machine à sous"
+                 style="width:128px;height:128px;object-fit:contain;cursor:pointer;">
+          </a>
+        </figure>
+
+        <div>
+          <h3 style="margin:0 0 6px 0;">Machine à sous</h3>
+          <p style="margin:0;color:#666">Jackpots & lignes — en développement.</p>
+        </div>
+
         <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-            <button [routerLink]="['/play/slots']"
-                    style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
+          <button [routerLink]="['/play/slots']"
+                  style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
             Jouer
           </button>
         </div>
       </article>
+
     </section>
 
     <!-- Profil / Info -->
