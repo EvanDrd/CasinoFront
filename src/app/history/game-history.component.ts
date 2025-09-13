@@ -11,13 +11,16 @@ import { FormsModule } from '@angular/forms';
   template: `
     <div style="max-width:900px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
       <h2>Historique {{ game ? ('— ' + (game | uppercase)) : '' }}</h2>
+
       <div style="margin-top:12px;">
         <label>Filtrer par jeu :</label>
         <input [(ngModel)]="gameInput" placeholder="ex: coinflip, slots, roulette" style="padding:6px;border:1px solid #ccc;border-radius:4px;" />
         <button (click)="loadForGame()" style="padding:6px 10px;margin-left:8px">Filtrer</button>
         <button (click)="loadAll()" style="padding:6px 10px;margin-left:8px">Tout</button>
       </div>
+
       <div *ngIf="loading" style="margin-top:12px">Chargement...</div>
+
       <table *ngIf="!loading && items.length>0" style="width:100%;margin-top:12px;border-collapse:collapse;">
         <thead>
         <tr style="text-align:left;border-bottom:1px solid #eee">
@@ -32,19 +35,41 @@ import { FormsModule } from '@angular/forms';
         <tbody>
         <tr *ngFor="let it of items">
           <td style="padding:8px">{{ it.game }}</td>
-          <td style="padding:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;display:flex;align-items:center;gap:10px;">
+
+          <!-- MODIF: rendu plus joli, selon le type -->
+          <td style="padding:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px;display:flex;align-items:center;gap:10px;">
             <ng-container *ngIf="formatOutcome(it) as fo">
-              <span *ngIf="fo.number!=null" [style.background]="colorFor(fo.color)" style="display:inline-flex;width:36px;height:36px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:700;">
+              <!-- Roulette : pastille numérotée colorée -->
+              <span *ngIf="fo.type==='roulette' && fo.number!=null"
+                    [style.background]="colorFor(fo.color)"
+                    style="display:inline-flex;width:36px;height:36px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:700;flex:0 0 auto;">
                 {{ fo.number }}
               </span>
+
+              <!-- Coinflip : jeton résultat (PILE/FACE) -->
+              <span *ngIf="fo.type==='coinflip'"
+                    [style.background]="couleurPileFace(fo.outcome)"
+                    style="display:inline-flex;width:36px;height:36px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:800;font-size:0.7rem;line-height:1;flex:0 0 auto;">
+  {{ (fo.outcome || '—') | uppercase }}
+</span>
+
+
+              <!-- Libellé -->
               <div>
                 <div style="font-weight:600">{{ fo.label }}</div>
+                <!-- AJOUT: sous-ligne explicite pour coinflip -->
+                <div *ngIf="fo.type==='coinflip'" style="font-size:0.85rem;color:#666">
+                  Choix : {{ fo.choice ? (fo.choice | titlecase) : '—' }} • Résultat : {{ fo.outcome ? (fo.outcome | titlecase) : '—' }}
+                </div>
               </div>
             </ng-container>
+
+            <!-- Fallback -->
             <ng-container *ngIf="!formatOutcome(it)">
               {{ it.outcome }}
             </ng-container>
           </td>
+
           <td style="padding:8px">{{ it.montantJoue }}</td>
           <td style="padding:8px" [style.color]="it.montantGagne>0 ? 'green' : '#b00020'">{{ it.montantGagne }}</td>
           <td style="padding:8px">{{ it.multiplier ? (it.multiplier | number:'1.2-2') : '—' }}</td>
@@ -52,7 +77,9 @@ import { FormsModule } from '@angular/forms';
         </tr>
         </tbody>
       </table>
+
       <div *ngIf="!loading && items.length === 0" style="margin-top:12px">Aucune partie trouvée.</div>
+
       <div style="margin-top:12px">
         <button routerLink="/home" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;background:white;">Retour</button>
       </div>
@@ -82,19 +109,27 @@ export class GameHistoryComponent implements OnInit {
 
   loadAll() {
     this.loading = true;
-    this.svc.getMyHistory().subscribe({ next: res => { this.items = res; this.loading = false; }, error: () => { this.items = []; this.loading = false; } });
+    this.svc.getMyHistory().subscribe({
+      next: res => { this.items = res; this.loading = false; },
+      error: () => { this.items = []; this.loading = false; }
+    });
   }
 
   loadForGame() {
     const g = this.gameInput && this.gameInput.trim() !== '' ? this.gameInput.trim() : null;
     if (!g) { this.loadAll(); return; }
     this.loading = true;
-    this.svc.getMyHistoryByGame(g).subscribe({ next: res => { this.items = res; this.loading = false; }, error: () => { this.items = []; this.loading = false; } });
+    this.svc.getMyHistoryByGame(g).subscribe({
+      next: res => { this.items = res; this.loading = false; },
+      error: () => { this.items = []; this.loading = false; }
+    });
   }
 
+  // MODIF: formatage enrichi
   formatOutcome(it: HistoryEntry) {
     if (!it || !it.outcome) return null;
     const o = it.outcome;
+
     if (it.game === 'roulette') {
       const map: Record<string,string> = {};
       o.split(',').forEach(p => {
@@ -103,12 +138,37 @@ export class GameHistoryComponent implements OnInit {
       });
       const num = map['number'] ? Number(map['number']) : (/\b\d+\b/.exec(o) ? Number(/\b\d+\b/.exec(o)![0]) : null);
       const color = (map['color'] ?? (o.includes('red') ? 'red' : o.includes('black') ? 'black' : o.includes('green') ? 'green' : null));
-      return { number: num, color, label: num != null ? `${num} ${color ? '(' + capitalize(color) + ')' : ''}`.trim() : o };
+      return { type:'roulette', number: num, color, label: num != null ? `${num} ${color ? '(' + capitalize(color) + ')' : ''}`.trim() : o };
     }
+
     if (it.game === 'coinflip') {
-      return { number: null, color: null, label: o.toUpperCase() };
+      // AJOUT: parsing robuste coinflip
+      const map = this.parseKeyVals(o);
+      const choice = (map['choice'] || this.grab(o, /choice\s*=\s*(pile|face)/i))?.toLowerCase() || null;
+      const outcome = (map['outcome'] || this.grab(o, /outcome\s*=\s*(pile|face)/i))?.toLowerCase() || null;
+      const win = !!choice && !!outcome ? (choice === outcome) : null;
+      const left = choice ? capitalize(choice) : '?';
+      const right = outcome ? capitalize(outcome) : '?';
+      const status = win==null ? '' : (win ? '• Gagné' : '• Perdu');
+      const label = `${left} → ${right} ${status}`.trim();
+      return { type:'coinflip', choice, outcome, win, label };
     }
-    return { number: null, color: null, label: o };
+
+    return { type:'autre', number: null, color: null, label: o };
+  }
+
+  // AJOUT: helpers
+  private parseKeyVals(s: string): Record<string,string> {
+    const map: Record<string,string> = {};
+    s.split(',').forEach(p => {
+      const [k,v] = p.split('=');
+      if (v !== undefined) map[k.trim().toLowerCase()] = v.trim();
+    });
+    return map;
+  }
+  private grab(s: string, re: RegExp): string | null {
+    const m = re.exec(s);
+    return m && m[1] ? m[1] : null;
   }
 
   colorFor(c?: string|null) {
@@ -117,6 +177,14 @@ export class GameHistoryComponent implements OnInit {
     if (c === 'black') return '#212121';
     if (c === 'green') return '#2e7d32';
     return '#666';
+  }
+
+  // AJOUT: couleurs coinflip
+  couleurPileFace(side?: string|null) {
+    if (!side) return '#666';
+    return side.toLowerCase() === 'pile'
+      ? 'linear-gradient(145deg, #2196f3, #1565c0)'
+      : 'linear-gradient(145deg, #ef5350, #c62828)';
   }
 }
 
