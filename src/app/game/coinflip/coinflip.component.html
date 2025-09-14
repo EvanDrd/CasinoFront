@@ -1,84 +1,60 @@
-<!-- src/app/games/coinflip/coinflip.component.html -->
-<div class="container">
-  <h2>Pile ou Face</h2>
+<div class="conteneur section-jeu">
+  <div class="panneau">
+    <h2 class="titre-page">Pile ou Face</h2>
+    <p class="sous-texte">Mise minimale : <strong>{{ minBet }}</strong> crédits.</p>
 
-  <p style="margin:6px 0 12px 0;color:#666;">
-    <small>Mise minimale : <strong>{{ minBet }}</strong> crédits.</small>
-  </p>
-
-  <div class="coin-stage">
-    <div class="coin-anim"
-         [class.en-attente]="enCours && !resolutionEnCours"
-         [class.en-resolution]="resolutionEnCours"
-         [style.--target-rot]="targetRot"
-         [style.--rot-dur]="rotateDuration"
-         [style.--base-rot]="baseRotDeg + 'deg'">
-      <div class="coin" [class.static]="!enCours && !resolutionEnCours">
-        <div class="face front">PILE</div>
-        <div class="face back">FACE</div>
+    <div class="coin-stage">
+      <!-- ton bloc animé actuel -->
+      <div class="coin-anim"
+           [class.en-attente]="enCours && !resolutionEnCours"
+           [class.en-resolution]="resolutionEnCours"
+           [style.--target-rot]="targetRot"
+           [style.--rot-dur]="rotateDuration"
+           [style.--base-rot]="baseRotDeg + 'deg'">
+        <div class="coin" [class.static]="!enCours && !resolutionEnCours">
+          <div class="face front">PILE</div>
+          <div class="face back">FACE</div>
+        </div>
+        <div class="shadow"></div>
       </div>
-      <div class="shadow"></div>
+    </div>
+
+    <div class="mb-12">
+      <label class="libelle">Mise (crédits)</label>
+      <input class="champ" type="number" [(ngModel)]="mise" [attr.min]="minBet" [max]="maxBet" [disabled]="enCours">
+      <small class="sous-texte">Solde : <strong>{{ currentBalance ?? '—' }}</strong></small>
+      <small *ngIf="mise && mise < minBet" style="display:block;color:#ff9b9b;">La mise doit être ≥ {{ minBet }}.</small>
+    </div>
+
+    <div class="mb-12">
+      <label class="libelle">Choisis</label>
+      <div class="d-flex gap-12">
+        <label><input type="radio" name="choix" [(ngModel)]="choix" value="pile" [disabled]="enCours"> Pile</label>
+        <label><input type="radio" name="choix" [(ngModel)]="choix" value="face" [disabled]="enCours"> Face</label>
+      </div>
+    </div>
+
+    <div class="boutons">
+      <button (click)="jouer()" [disabled]="enCours || !mise || mise < minBet" class="bouton bouton--primaire">Jouer</button>
+      <a [routerLink]="['/home']" class="bouton">Retour</a>
+    </div>
+
+    <div *ngIf="message || error" class="panneau mt-12">
+      <div *ngIf="lastResult">
+        <p><strong>Résultat :</strong> {{ lastResult?.outcome | uppercase }}</p>
+        <p *ngIf="lastResult?.win" style="color:#34d399">Tu as gagné ! +{{ lastResult?.montantGagne }} crédits.</p>
+        <p *ngIf="lastResult && !lastResult.win" style="color:#f87171">Tu as perdu. -{{ lastResult?.montantJoue }} crédits.</p>
+        <p>Solde : <strong>{{ lastResult?.solde }}</strong></p>
+      </div>
+      <p *ngIf="error" style="color:#ff9b9b">{{ error }}</p>
+    </div>
+
+    <div class="mt-12 sous-texte">
+      <small>Gain net = (2×mise) − mise quand tu gagnes.</small>
     </div>
   </div>
 
-
-  <div class="form-block">
-    <label>Mise (crédits)</label><br/>
-    <input type="number"
-           [(ngModel)]="mise"
-           [attr.min]="minBet"
-           [max]="maxBet"
-           [disabled]="enCours" />
-    <small style="display:block;color:#666">Solde actuel : <strong>{{ currentBalance ?? '—' }}</strong></small>
-    <small *ngIf="mise && mise < minBet" style="display:block;color:#b00020;">
-      La mise doit être ≥ {{ minBet }}.
-    </small>
+  <div class="panneau mt-12">
+    <app-game-history-list [game]="'coinflip'" [limit]="5"></app-game-history-list>
   </div>
-
-  <div class="form-block">
-    <label>Choisis :</label><br/>
-    <label style="margin-right:12px;">
-      <input type="radio" name="choix" [(ngModel)]="choix" value="pile" [disabled]="enCours" /> Pile
-    </label>
-    <label>
-      <input type="radio" name="choix" [(ngModel)]="choix" value="face" [disabled]="enCours" /> Face
-    </label>
-  </div>
-
-  <div class="actions" style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-    <button (click)="jouer()"
-            [disabled]="enCours || !mise || mise < minBet"
-            style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
-      Jouer
-    </button>
-
-    <button [routerLink]="['/home']"
-            style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
-      Retour
-    </button>
-  </div>
-
-  <div *ngIf="message || error" class="result-box">
-    <div *ngIf="lastResult">
-      <p><strong>Résultat :</strong> {{ lastResult?.outcome | uppercase }}</p>
-
-      <p *ngIf="lastResult?.win" class="win">
-        Tu as gagné ! Montant crédité : <strong>{{ lastResult?.montantGagne }}</strong> crédits.
-      </p>
-
-      <p *ngIf="lastResult && !lastResult.win" class="lose">
-        Tu as perdu. Perte : <strong>{{ lastResult?.montantJoue }}</strong> crédits.
-      </p>
-
-      <p>Solde actuel : <strong>{{ lastResult?.solde }}</strong></p>
-    </div>
-
-    <p *ngIf="error" class="error">{{ error }}</p>
-  </div>
-
-  <div style="margin-top:12px;color:#666">
-    <small>Note : si tu gagnes, le payout = 2 × mise (la mise a été débitée au départ). Gain net = payout − mise.</small>
-  </div>
-
-  <app-game-history-list [game]="'coinflip'" [limit]="5"></app-game-history-list>
 </div>

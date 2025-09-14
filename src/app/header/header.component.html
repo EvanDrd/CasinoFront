@@ -1,51 +1,43 @@
-<!-- src/app/header/header.component.html -->
-<header style="padding:12px; background:#222; color:#fff; display:flex; align-items:center; justify-content:space-between; position:relative;">
+<header class="en-tete-casino">
+  <div class="barre">
+    <!-- Zone gauche -->
+    <div class="zone-gauche d-flex aic gap-12">
+      <h1>Mon Casino</h1>
+    </div>
 
-  <!-- logo centré -->
-  <!-- logo centré -->
-  <div style="position:absolute; left:50%; transform:translateX(-50%); z-index:10; margin-top:40px;">
-    <a [routerLink]="['/home']" style="display:inline-block;">
-      <img src="assets/images/logo.jpg" alt="Logo Mon Casino" style="height:100px; width:200px; cursor:pointer;">
-    </a>
-  </div>
+    <!-- Logo centré -->
+    <div class="logo-centre">
+      <a [routerLink]="['/home']" aria-label="Accueil">
+        <img src="assets/images/logo.jpg" alt="Logo Mon Casino">
+      </a>
+    </div>
 
-
-  <!-- partie gauche -->
-  <div style="display:flex;align-items:center;gap:12px;">
-    <h1 style="margin:0; font-size:1.1rem;">Mon Casino</h1>
-  </div>
-
-  <!-- partie droite -->
-  <div style="display:flex;align-items:center;gap:12px;">
-    <ng-container *ngIf="isLoggedIn(); else showLogin">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="color:#fff;display:flex;flex-direction:column;align-items:flex-end;">
-          <small style="color:#ddd;">Connecté·e en tant que</small>
-          <strong>{{ userObj?.pseudo || userObj?.email }}</strong>
+    <!-- Zone droite (login / profil) -->
+    <div class="zone-droite">
+      <ng-container *ngIf="isLoggedIn(); else showLogin">
+        <div class="d-flex aic gap-12">
+          <div style="text-align:right;">
+            <small class="texte-secondaire" style="display:block;margin-bottom:2px;">Connecté·e en tant que</small>
+            <strong>{{ userObj?.pseudo || userObj?.email }}</strong>
+          </div>
+          <app-balance-header></app-balance-header>
+          <button (click)="logout()" class="bouton bouton--danger">Se déconnecter</button>
         </div>
-        <app-balance-header></app-balance-header>
-        <button (click)="logout()" style="padding:8px 10px;border-radius:6px;border:none;background:#e53935;color:white;cursor:pointer;">
-          Se déconnecter
-        </button>
-      </div>
-    </ng-container>
+      </ng-container>
 
-    <ng-template #showLogin>
-      <form (ngSubmit)="submitLogin()" style="display:flex;gap:8px;align-items:center;">
-        <input [(ngModel)]="email" name="email" type="email" placeholder="email"
-               style="padding:6px;border-radius:6px;border:1px solid #444;background:#fff;color:#000;width:180px;" />
-        <input [(ngModel)]="motDePasse" name="motDePasse" type="password" placeholder="mot de passe"
-               style="padding:6px;border-radius:6px;border:1px solid #444;background:#fff;color:#000;width:140px;" />
-        <button type="submit" [disabled]="loading"
-                style="padding:8px 10px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
-          {{ loading ? 'Connexion…' : 'Se connecter' }}
-        </button>
-        <button type="button" (click)="router.navigate(['/register'])"
-                style="padding:8px 10px;border-radius:6px;border:1px solid #1976d2;background:white;color:#1976d2;cursor:pointer;">
-          S'inscrire
-        </button>
-      </form>
-      <div *ngIf="error" style="color:#ffb3b3;margin-left:12px;">{{ error }}</div>
-    </ng-template>
+      <ng-template #showLogin>
+        <form (ngSubmit)="submitLogin()" class="d-flex aic gap-8">
+          <input [(ngModel)]="email" name="email" type="email" placeholder="email" class="champ" style="width:180px;">
+          <input [(ngModel)]="motDePasse" name="motDePasse" type="password" placeholder="mot de passe" class="champ" style="width:160px;">
+          <button type="submit" [disabled]="loading" class="bouton bouton--primaire">
+            {{ loading ? 'Connexion…' : 'Se connecter' }}
+          </button>
+          <button type="button" (click)="router.navigate(['/register'])" class="bouton">
+            S'inscrire
+          </button>
+        </form>
+        <div *ngIf="error" style="color:#ffb3b3;margin-left:12px;">{{ error }}</div>
+      </ng-template>
+    </div>
   </div>
 </header>

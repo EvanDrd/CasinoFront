@@ -1,108 +1,59 @@
-<!-- src/app/home/home.component.html -->
-<div class="home-container" style="max-width:900px;margin:32px auto;padding:20px;">
-  <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-    <div>
-      <h1 style="margin:0 0 6px 0;">Mon Casino</h1>
-      <small style="color:#666;">Bienvenue dans ton espace</small>
-    </div>
-  </header>
-
-  <main style="background:#fff;padding:18px;border-radius:8px;border:1px solid #eee;box-shadow:0 1px 6px rgba(0,0,0,0.03);">
-    <section style="margin-bottom:14px;">
-      <h2 style="margin:0 0 8px 0;">Bienvenue {{ pseudo }} 🎉</h2>
-      <p style="margin:0;color:#444;">Tu es connecté·e — sélectionne un jeu ci-dessous pour commencer.</p>
+<div class="conteneur">
+  <main class="panneau">
+    <section class="mb-12">
+      <h2 class="titre-page">Bienvenue {{ pseudo }} 🎉</h2>
+      <p class="texte-secondaire">Sélectionne un jeu ci-dessous pour commencer.</p>
     </section>
 
-    <!-- Catalogue des jeux -->
-    <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px;">
-
-      <!-- Card: Pile ou Face -->
-      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
-        <!-- Logo au-dessus du titre -->
-        <figure style="margin:0 0 12px 0;display:flex;justify-content:center;">
-          <a [routerLink]="['/play/coinflip']" style="display:inline-block;">
-            <img src="assets/images/logo-coinflip.png" alt="Logo Pile ou Face"
-                 style="width:128px;height:128px;object-fit:contain;cursor:pointer;">
-          </a>
-        </figure>
-
+    <section class="grille-jeux">
+      <!-- Coinflip -->
+      <article class="carte-jeu">
+        <div class="carte-media">
+          <a [routerLink]="['/play/coinflip']"><img src="assets/images/logo-coinflip.png" alt="Pile ou Face"></a>
+        </div>
         <div>
-          <h3 style="margin:0 0 6px 0;">Pile ou Face</h3>
-          <p style="margin:0;color:#666">Mise simple — 2× payout si tu gagnes. Choisis pile ou face.</p>
+          <h3 style="margin:0 0 6px 0;font-family:'Playfair Display',serif;color:#f1f5f9;">Pile ou Face</h3>
+          <p class="texte-secondaire">Mise simple — 2× payout si tu gagnes. Choisis pile ou face.</p>
         </div>
-
-        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-          <button [routerLink]="['/play/coinflip']"
-                  style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
-            Jouer
-          </button>
+        <div class="d-flex jcsb aic">
+          <span class="solde-chip">Min bet 100</span>
+          <a [routerLink]="['/play/coinflip']" class="bouton bouton--or">Jouer</a>
         </div>
       </article>
 
-      <!-- Card: Roulette -->
-      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
-        <!-- Logo au-dessus du titre -->
-        <figure style="margin:0 0 12px 0;display:flex;justify-content:center;">
-          <a [routerLink]="['/play/roulette']" style="display:inline-block;">
-            <img src="assets/images/logo-roulette.png" alt="Logo Roulette"
-                 style="width:128px;height:128px;object-fit:contain;cursor:pointer;">
-          </a>
-        </figure>
-
+      <!-- Roulette -->
+      <article class="carte-jeu">
+        <div class="carte-media">
+          <a [routerLink]="['/play/roulette']"><img src="assets/images/logo-roulette.png" alt="Roulette"></a>
+        </div>
         <div>
-          <h3 style="margin:0 0 6px 0;">Roulette (bientôt)</h3>
-          <p style="margin:0;color:#666">Modes de mise variés — en développement.</p>
+          <h3 style="margin:0 0 6px 0;font-family:'Playfair Display',serif;color:#f1f5f9;">Roulette</h3>
+          <p class="texte-secondaire">Numéro, couleur, pair/impair — place tes mises.</p>
         </div>
-
-        <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-          <button [routerLink]="['/play/roulette']"
-                  style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
-            Jouer
-          </button>
+        <div class="d-flex jcsb aic">
+          <span class="solde-chip">Min bet 100</span>
+          <a [routerLink]="['/play/roulette']" class="bouton bouton--or">Jouer</a>
         </div>
       </article>
 
-      <!-- Card: Machine à sous -->
-      <article style="padding:16px;border-radius:8px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:space-between;">
-        <!-- Logo au-dessus du titre -->
-        <figure style="margin:0 0 12px 0;display:flex;justify-content:center;">
-          <a [routerLink]="['/play/slots']" style="display:inline-block;">
-            <img src="assets/images/logo-slot.png" alt="Logo Machine à sous"
-                 style="width:128px;height:128px;object-fit:contain;cursor:pointer;">
-          </a>
-        </figure>
-
+      <!-- Slots -->
+      <article class="carte-jeu">
+        <div class="carte-media">
+          <a [routerLink]="['/play/slots']"><img src="assets/images/logo-slot.png" alt="Machine à sous"></a>
+        </div>
         <div>
-          <h3 style="margin:0 0 6px 0;">Machine à sous</h3>
-          <p style="margin:0;color:#666">Jackpots & lignes — en développement.</p>
+          <h3 style="margin:0 0 6px 0;font-family:'Playfair Display',serif;color:#f1f5f9;">Machine à sous</h3>
+          <p class="texte-secondaire">Rouleaux, symboles, gains — tente ta chance.</p>
         </div>
-
-        <div style="margin-top:12px;display:flex;justify-content:flex-end;">
-          <button [routerLink]="['/play/slots']"
-                  style="padding:8px 12px;border-radius:6px;border:none;background:#1976d2;color:white;cursor:pointer;">
-            Jouer
-          </button>
+        <div class="d-flex jcsb aic">
+          <span class="solde-chip">Min bet 100</span>
+          <a [routerLink]="['/play/slots']" class="bouton bouton--or">Jouer</a>
         </div>
-      </article>
-
-    </section>
-
-    <!-- Profil / Info -->
-    <section style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
-      <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
-        <h3 style="margin:0 0 6px 0;">Profil</h3>
-        <p style="margin:0;">Pseudo : <strong>{{ pseudo }}</strong></p>
-        <p style="margin:6px 0 0 0;">Email : <small>{{ userObj?.email || 'Non disponible' }}</small></p>
-      </article>
-
-      <article style="padding:12px;border-radius:8px;border:1px solid #f0f0f0;">
-        <h3 style="margin:0 0 6px 0;">Sécurité</h3>
-        <p style="margin:0;">Token stocké : <small>{{ tokenPresent ? '✔️ présent' : '❌ absent' }}</small></p>
-        <p style="margin:6px 0 0 0;font-size:0.9rem;color:#666;">Déconnecte-toi pour tester le flux d'authentification.</p>
       </article>
     </section>
 
-    <app-history-widget></app-history-widget>
-
+    <section class="mt-16">
+      <app-history-widget></app-history-widget>
+    </section>
   </main>
 </div>

@@ -1,9 +1,10 @@
-<div class="roulette-layout">
-  <!-- PARTIE MISES (à gauche) -->
+<div class="conteneur section-jeu roulette-layout">
+  <!-- Contrôles -->
   <div class="bet-controls">
+    <h3 style="margin:0 0 10px 0;font-family:'Playfair Display',serif;color:#f1f5f9;">Parier</h3>
 
-    <label>Type de pari</label>
-    <select [(ngModel)]="betType">
+    <label class="libelle">Type de pari</label>
+    <select [(ngModel)]="betType" class="champ mb-12">
       <option value="straight">Numéro</option>
       <option value="color">Couleur</option>
       <option value="parity">Pair / Impair</option>
@@ -11,120 +12,66 @@
       <option value="dozen">Douzaine</option>
     </select>
 
-    <div class="bet-value">
-      <label>Valeur</label>
+    <div class="mb-12">
+      <label class="libelle">Valeur</label>
       <ng-container [ngSwitch]="betType">
-        <input *ngSwitchCase="'straight'" type="number" min="0" max="36" [(ngModel)]="betValue" />
-        <select *ngSwitchCase="'color'" [(ngModel)]="betValue">
-          <option value="red">Rouge</option>
-          <option value="black">Noir</option>
+        <input *ngSwitchCase="'straight'" class="champ" type="number" min="0" max="36" [(ngModel)]="betValue"/>
+        <select *ngSwitchCase="'color'" class="champ" [(ngModel)]="betValue">
+          <option value="red">Rouge</option><option value="black">Noir</option>
         </select>
-        <select *ngSwitchCase="'parity'" [(ngModel)]="betValue">
-          <option value="even">Pair</option>
-          <option value="odd">Impair</option>
+        <select *ngSwitchCase="'parity'" class="champ" [(ngModel)]="betValue">
+          <option value="even">Pair</option><option value="odd">Impair</option>
         </select>
-        <select *ngSwitchCase="'range'" [(ngModel)]="betValue">
-          <option value="low">1-18</option>
-          <option value="high">19-36</option>
+        <select *ngSwitchCase="'range'" class="champ" [(ngModel)]="betValue">
+          <option value="low">1-18</option><option value="high">19-36</option>
         </select>
-        <select *ngSwitchCase="'dozen'" [(ngModel)]="betValue">
-          <option value="1">1 (1-12)</option>
-          <option value="2">2 (13-24)</option>
-          <option value="3">3 (25-36)</option>
+        <select *ngSwitchCase="'dozen'" class="champ" [(ngModel)]="betValue">
+          <option value="1">1 (1-12)</option><option value="2">2 (13-24)</option><option value="3">3 (25-36)</option>
         </select>
       </ng-container>
     </div>
 
-    <div class="bet-amount">
-      <label>Mise</label>
-      <input type="number" [(ngModel)]="montant" min="1" />
+    <div class="mb-12">
+      <label class="libelle">Mise</label>
+      <input class="champ" type="number" [(ngModel)]="montant" min="1"/>
+      <small class="sous-texte">Mise minimale : <strong>{{ minBet }}</strong> • Solde : <strong>{{ currentBalance ?? '—' }}</strong></small>
     </div>
 
-    <!-- Rappel mise minimale -->
-    <p style="margin:6px 0 12px 0;color:#666;">
-      <small>Mise minimale : <strong>{{ minBet }}</strong> crédits.</small>
-    </p>
-
-
-    <button (click)="jouer()"  [disabled]="enCours || !montant || montant < minBet">Placer le pari</button>
-    <div class="auto-spin">
-      <label>Auto-Spin</label>
-      <div>
-        <input type="number" min="1" placeholder="Nb de tours"
-               [(ngModel)]="autoSpinCount" [disabled]="autoSpinActive">
-        <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="autoSpinActive || montant<minBet">Lancer</button>
-        <button (click)="startAutoSpin()" [disabled]="autoSpinActive || montant<minBet">Infini</button>
-        <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive">Stop</button>
-      </div>
+    <div class="boutons">
+      <button (click)="jouer()" [disabled]="enCours || !montant || montant < minBet" class="bouton bouton--or">Placer le pari</button>
+      <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="autoSpinActive || montant<minBet" class="bouton">Auto (N)</button>
+      <button (click)="startAutoSpin()" [disabled]="autoSpinActive || montant<minBet" class="bouton">Auto ∞</button>
+      <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive" class="bouton bouton--secondaire">Stop</button>
+      <a [routerLink]="['/home']" class="bouton">Retour</a>
     </div>
 
-    <!-- BOUTON RETOUR -->
-    <button [routerLink]="['/home']"
-            style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
-      Retour
-    </button>
-
-
-
-    <div class="status">
+    <div class="panneau mt-12">
       <p>Solde : <strong>{{ currentBalance ?? '—' }}</strong></p>
-
-      <div *ngIf="lastResult" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
-        <div [style.background]="colorFor(lastResult.color)"
-             style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:20px;">
-          {{ lastResult.number }}
-        </div>
-
+      <div *ngIf="lastResult" class="d-flex aic gap-12 mt-8">
+        <div [style.background]="colorFor(lastResult.color)" class="pastille" style="width:56px;height:56px;font-size:20px;">{{ lastResult.number }}</div>
         <div>
-          <div style="font-weight:700">
-            {{ lastResult.number }}
-            <small style="color:#666;text-transform:capitalize;margin-left:8px;">{{ lastResult.color }}</small>
-          </div>
-
-          <div *ngIf="lastResult.win" style="color:green;margin-top:6px;">
-            Gagné +{{ lastResult.montantGagne }}
-          </div>
-          <div *ngIf="!lastResult.win" style="color:#b00020;margin-top:6px;">
-            Perdu -{{ lastResult.montantJoue }}
-          </div>
-
-          <div style="color:#666;margin-top:6px;">
-            Multiplicateur : <strong>{{ resultMultiplier(lastResult) ?? '—' }}</strong>
-          </div>
+          <div style="font-weight:700">{{ lastResult.number }} <small style="text-transform:capitalize;margin-left:8px;">{{ lastResult.color }}</small></div>
+          <div *ngIf="lastResult.win" style="color:#34d399;margin-top:6px;">Gagné +{{ lastResult.montantGagne }}</div>
+          <div *ngIf="!lastResult.win" style="color:#f87171;margin-top:6px;">Perdu -{{ lastResult.montantJoue }}</div>
+          <div class="sous-texte mt-8">Multiplicateur : <strong>{{ resultMultiplier(lastResult) ?? '—' }}</strong></div>
         </div>
       </div>
-
-      <div *ngIf="!lastResult" style="color:#666;margin-top:8px;">Aucun spin récent</div>
-
-      <p *ngIf="error" class="error" style="margin-top:8px">{{ error }}</p>
+      <div *ngIf="!lastResult" class="sous-texte">Aucun spin récent</div>
+      <p *ngIf="error" class="mt-8" style="color:#ff9b9b">{{ error }}</p>
     </div>
 
-    <app-game-history-list [game]="'roulette'" [limit]="5"></app-game-history-list>
-
+    <app-game-history-list [game]="'roulette'" [limit]="5" class="mt-12"></app-game-history-list>
   </div>
 
-  <!-- ZONE ROUE + TABLEAU -->
+  <!-- Zone roue + table -->
   <div class="roulette-main">
-    <!-- ROUE -->
+    <h2 class="titre-page">Roulette</h2>
     <div class="wheel-stage">
-      <div class="wheel-wrapper"
-           [style.width.px]="wheelSizePx"
-           [style.height.px]="wheelSizePx">
+      <div class="wheel-wrapper" [style.width.px]="wheelSizePx" [style.height.px]="wheelSizePx">
         <div class="wheel-numbers-container">
-          <div #wheelEl
-               class="wheel-numbers"
-               [class.spinning]="wheelSpinning"
-               [style.transition]="wheelTransition"
-               [style.transform]="'rotate(' + wheelRotation + 'deg)'">
-            <div *ngFor="let n of wheelNumbers; let i = index"
-                 class="wheel-number"
-                 [style.transform]="'rotate(' + (i * sectorAngle) + 'deg) translateY(-' + rimRadiusPx + 'px)'">
-              <span class="num-label"
-                    [class.red]="isRed(n)"
-                    [class.green]="n === 0"
-                    [class.black]="!isRed(n) && n !== 0">
-                {{ n }}
-              </span>
+          <div #wheelEl class="wheel-numbers" [class.spinning]="wheelSpinning" [style.transition]="wheelTransition" [style.transform]="'rotate(' + wheelRotation + 'deg)'">
+            <div *ngFor="let n of wheelNumbers; let i = index" class="wheel-number" [style.transform]="'rotate(' + (i * sectorAngle) + 'deg) translateY(-' + rimRadiusPx + 'px)'">
+              <span class="num-label" [class.red]="isRed(n)" [class.green]="n === 0" [class.black]="!isRed(n) && n !== 0">{{ n }}</span>
             </div>
           </div>
         </div>
@@ -132,8 +79,9 @@
       </div>
     </div>
 
-    <!-- TABLEAU -->
+    <!-- Table des mises (reprend tes classes existantes) -->
     <div class="bet-table">
+      <!-- … ton tableau existant inchangé … -->
       <div class="table-top">
         <div class="zero-col">
           <button class="cell zero" (click)="betType='straight'; betValue='0'; choisirNumero(0)">0</button>

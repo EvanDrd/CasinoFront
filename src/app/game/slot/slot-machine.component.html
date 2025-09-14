@@ -1,88 +1,59 @@
-<div class="slot-wrap" style="max-width:920px;margin:20px auto;padding:18px;border:1px solid #eee;border-radius:8px;">
-  <h2>Machine à sous</h2>
+<div class="conteneur">
+  <div class="slot-wrap">
+    <h2 class="titre-page">Machine à sous</h2>
+    <p class="sous-texte">Solde : <strong>{{ currentBalance ?? '—' }}</strong> • Mise minimale : <strong>{{ minBet }}</strong></p>
 
-
-
-  <div style="margin:16px 0;">
-    <small>Solde actuel: <strong>{{ currentBalance ?? '—' }}</strong></small>
-  </div>
-
-  <!-- Rappel mise minimale -->
-  <p style="margin:6px 0 12px 0;color:#666;">
-    <small>Mise minimale : <strong>{{ minBet }}</strong> crédits.</small>
-  </p>
-
-
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
-        <label style="min-width:90px;">Mise (crédits)</label>
-        <input type="number" [(ngModel)]="mise" [attr.min]="minBet"  min="1" style="width:140px;padding:6px;border:1px solid #ccc;border-radius:4px" />
-
-
-        <!-- Spin bouton largeur fixe -->
-        <button (click)="jouer()" [disabled]="enCours" class="spin-btn" style="padding:8px 12px;border-radius:6px;background:#1976d2;color:white;border:none;cursor:pointer;">
-            {{ enCours ? 'Spinning…' : 'Spin' }}
-        </button>
-
-
-        <!-- Auto-spin count -->
-        <label style="margin-left:6px;">Nombre d'autospins</label>
-        <input type="number" [(ngModel)]="autoSpinCount" min="0"
-               title="0 = infini" style="width:80px;padding:6px;border:1px solid #ccc;border-radius:4px" />
-
-        <button (click)="startAutoSpin()" [disabled]="autoSpinActive || (currentBalance!=null && mise>currentBalance)"
-                style="padding:8px 12px;border-radius:6px;border:1px solid #1976d2;background:#e8f0ff;color:#1976d2;cursor:pointer;">
-            Auto-Spin
-        </button>
-
-        <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive"
-                style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
-            Stop
-        </button>
-
-        <button [routerLink]="['/home']" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;background:white;color:#333;cursor:pointer;">
-            Retour
-        </button>
-
-        <!-- info remaining -->
-        <div *ngIf="autoSpinActive" style="margin-left:8px;color:#333;font-weight:600;">
-            <small>
-                {{ remainingAutoSpins != null ? ('Restant: ' + remainingAutoSpins) : 'Auto : infini' }}
-            </small>
-        </div>
-    </div>
-
-
-
-    <!-- reels area -->
-  <div class="reels-area" [class.disabled]="enCours">
-    <div class="reel" *ngFor="let reel of reels; let ri = index">
-      <!-- strip is the scrolling element -->
-      <div class="strip" #reelStrip>
-        <div class="cell" *ngFor="let s of reel.sequence">{{ s }}</div>
+    <div class="d-flex aic gap-12 mb-12" style="flex-wrap:wrap;">
+      <div style="min-width:180px;">
+        <label class="libelle">Mise (crédits)</label>
+        <input class="champ" type="number" [(ngModel)]="mise" [attr.min]="minBet" min="1" />
       </div>
-      <!-- center marker -->
-      <div class="mask"></div>
+
+      <button (click)="jouer()" [disabled]="enCours" class="bouton bouton--primaire" style="width:120px;">
+        {{ enCours ? 'Spinning…' : 'Spin' }}
+      </button>
+
+      <div class="d-flex aic gap-8">
+        <label class="libelle" style="margin:0;">Autospins</label>
+        <input class="champ" type="number" [(ngModel)]="autoSpinCount" min="0" title="0 = infini" style="width:90px;">
+        <button (click)="startAutoSpin()" [disabled]="autoSpinActive || (currentBalance!=null && mise>currentBalance)" class="bouton">Auto-Spin</button>
+        <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive" class="bouton bouton--secondaire">Stop</button>
+      </div>
+
+      <a [routerLink]="['/home']" class="bouton">Retour</a>
+
+      <div *ngIf="autoSpinActive" class="solde-chip"> {{ remainingAutoSpins != null ? ('Restant: ' + remainingAutoSpins) : 'Auto : infini' }} </div>
+    </div>
+
+    <!-- Reels -->
+    <div class="reels-area" [class.disabled]="enCours">
+      <div class="reel" *ngFor="let reel of reels; let ri = index">
+        <div class="strip" #reelStrip>
+          <div class="cell" *ngFor="let s of reel.sequence">{{ s }}</div>
+        </div>
+        <div class="mask"></div>
+      </div>
+    </div>
+
+    <!-- Résultat (l’ancien reste visible pendant le spin ; mis à jour en fin de spin) -->
+    <div *ngIf="lastResult" class="panneau mt-12">
+      <div class="final-row d-flex gap-12" style="justify-content:center; margin-bottom:8px;">
+        <div *ngFor="let s of lastResult.reels" class="final-cell" style="font-size:36px;min-width:64px;text-align:center;">{{ s }}</div>
+      </div>
+
+      <p *ngIf="lastResult.win" style="color:#34d399;margin:0;">Tu as gagné ! +<strong>{{ lastResult.montantGagne }}</strong> crédits.</p>
+      <p *ngIf="!lastResult.win" style="color:#f87171;margin:0;">Tu as perdu. -<strong>{{ lastResult.montantJoue }}</strong> crédits.</p>
+      <p class="mt-8">Solde : <strong>{{ lastResult.solde }}</strong></p>
+    </div>
+
+    <p *ngIf="error" style="color:#ff9b9b" class="mt-12">{{ error }}</p>
+
+    <div class="mt-16 sous-texte">
+      <small>Machine visuelle adaptative — le nombre de rouleaux s'ajuste à la configuration.</small>
     </div>
   </div>
 
-  <div *ngIf="lastResult" class="result-block" style="margin-top:12px;padding:10px;border-radius:6px;background:#fafafa;">
-    <div class="final-row" style="display:flex;gap:12px;justify-content:center;margin-bottom:8px;">
-      <div *ngFor="let s of lastResult.reels" style="font-size:36px;min-width:64px;text-align:center;">{{ s }}</div>
-    </div>
-
-    <p *ngIf="lastResult.win" style="color:green;margin:0;">
-      Tu as gagné ! Montant crédité : <strong>{{ lastResult.montantGagne }}</strong> crédits.
-    </p>
-    <p *ngIf="!lastResult.win" style="color:#b00020;margin:0;">
-      Tu as perdu. Perte : <strong>{{ lastResult.montantJoue }}</strong> crédits.
-    </p>
-    <p style="margin-top:8px;">Solde actuel : <strong>{{ lastResult.solde }}</strong></p>
-  </div>
-
-  <div *ngIf="error" style="color:#b00020;margin-top:12px">{{ error }}</div>
-
-  <div style="margin-top:18px;color:#666">
-    <small>Machine visuelle adaptative — le nombre de rouleaux s'ajuste à la configuration.</small>
+  <div class="panneau mt-12">
     <app-game-history-list [game]="'slots'" [limit]="5"></app-game-history-list>
   </div>
 </div>
