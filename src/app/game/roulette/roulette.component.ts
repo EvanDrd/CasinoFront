@@ -1,3 +1,4 @@
+// src/app/games/roulette/roulette.component.ts
 import { Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { Subscription } from 'rxjs';
 import { GameHistoryListComponent } from '../../history/game-history-list.component';
 import { HistoryService } from '../../services/history/history.service';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-roulette',
@@ -19,11 +21,7 @@ export class RouletteComponent implements OnDestroy {
   @ViewChild('wheelEl', { static: false }) wheelEl?: ElementRef<HTMLDivElement>;
   wheelNumbers = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
   private static readonly RED_SET = new Set<number>([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-  tableRows = [
-    Array.from({ length: 12 }, (_, i) => i + 1),
-    Array.from({ length: 12 }, (_, i) => i + 13),
-    Array.from({ length: 12 }, (_, i) => i + 25)
-  ];
+  tableRows = [ Array.from({ length: 12 }, (_, i) => i + 1), Array.from({ length: 12 }, (_, i) => i + 13), Array.from({ length: 12 }, (_, i) => i + 25) ];
   readonly wheelSizePx = 360;
   readonly rimRadiusPx = 160;
   sectorAngle = 360 / this.wheelNumbers.length;
@@ -45,6 +43,9 @@ export class RouletteComponent implements OnDestroy {
   private lastSpinFinished = true;
   minBet = 100;
 
+  // ✅ aperçu
+  isLoggedIn = false;
+
   private destroyed = false;
   private pendingTimeouts: any[] = [];
   private currentPlaySub?: Subscription;
@@ -52,9 +53,17 @@ export class RouletteComponent implements OnDestroy {
   constructor(
     private game: RouletteService,
     private wallet: WalletService,
-    private history: HistoryService
+    private history: HistoryService,
+    private authService: AuthService
   ) {
     this.walletSub = this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
+
+    this.isLoggedIn = !!localStorage.getItem('jwt');
+    try {
+      const maybe = (this.authService as any).isLoggedIn;
+      if (typeof maybe === 'function') this.isLoggedIn = !!maybe.call(this.authService);
+      (this.authService as any).authState$?.subscribe((v: any) => this.isLoggedIn = !!v);
+    } catch {}
   }
 
   ngOnDestroy(): void {
@@ -65,12 +74,12 @@ export class RouletteComponent implements OnDestroy {
   }
 
   isRed(n: number | null | undefined): boolean {
-    if (n == null) return false;
-    if (n === 0) return false;
+    if (n == null || n === 0) return false;
     return RouletteComponent.RED_SET.has(Number(n));
   }
 
   choisirNumero(n: number) {
+    if (!this.isLoggedIn || this.enCours) return;
     this.betType = 'straight';
     this.betValue = '' + n;
     this.selectedNumber = n;
@@ -90,12 +99,10 @@ export class RouletteComponent implements OnDestroy {
 
   jouer(autoTrigger = false) {
     this.error = null;
+    if (!this.isLoggedIn) { this.error = 'Veuillez vous connecter pour jouer.'; return; }
     if (this.betType !== 'straight') this.selectedNumber = null;
     if (!this.montant || this.montant <= 0) { this.error = 'Mise invalide'; return; }
-    if (!this.montant || this.montant < this.minBet) {
-      this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`;
-      return;
-    }
+    if (this.montant < this.minBet) { this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`; return; }
     if (!this.betType || this.betValue == null) { this.error = 'Pari invalide'; return; }
     if (this.enCours) return;
 
@@ -106,9 +113,8 @@ export class RouletteComponent implements OnDestroy {
 
     const req = { betType: this.betType, betValue: this.betValue, montant: this.montant };
 
-    const play$ = this.game.jouerRoulette(req);
     this.currentPlaySub?.unsubscribe();
-    this.currentPlaySub = play$.subscribe({
+    this.currentPlaySub = this.game.jouerRoulette(req).subscribe({
       next: (res) => {
         if (this.destroyed) return;
         const idx = this.wheelNumbers.indexOf(res.number);
@@ -140,27 +146,20 @@ export class RouletteComponent implements OnDestroy {
           this.wheelRotation = targetMod;
           this.lastSpinFinished = true;
 
-          const entry = {
+          this.history.pushLocal({
             game: 'roulette',
             outcome: `number=${res.number},color=${res.color}`,
             montantJoue: res.montantJoue,
             montantGagne: res.montantGagne,
             multiplier: (res.montantJoue ? (res.montantGagne / res.montantJoue) : 0),
             createdAt: new Date().toISOString()
-          };
-          this.history.pushLocal(entry);
+          });
 
           if (this.autoSpinActive && !this.destroyed) {
             if (this.autoSpinCount !== null) {
-              if (this.autoSpinCount > 1) {
-                this.autoSpinCount--;
-                this.jouer(true);
-              } else {
-                this.stopAutoSpin();
-              }
-            } else {
-              this.jouer(true);
-            }
+              if (this.autoSpinCount > 1) { this.autoSpinCount--; this.jouer(true); }
+              else { this.stopAutoSpin(); }
+            } else { this.jouer(true); }
           }
         }, totalMs);
         this.pendingTimeouts.push(t2);
@@ -177,6 +176,7 @@ export class RouletteComponent implements OnDestroy {
   }
 
   startAutoSpin(count?: number) {
+    if (!this.isLoggedIn) { this.error = 'Veuillez vous connecter pour jouer.'; return; }
     this.autoSpinActive = true;
     this.autoSpinCount = count ?? null;
     if (this.lastSpinFinished) this.jouer(true);
@@ -197,8 +197,7 @@ export class RouletteComponent implements OnDestroy {
   }
 
   resultMultiplier(res: RouletteBetResponse | null): number | null {
-    if (!res) return null;
-    if (!res.montantJoue || res.montantJoue === 0) return null;
+    if (!res || !res.montantJoue) return null;
     return Math.round((res.montantGagne / res.montantJoue) * 100) / 100;
   }
 

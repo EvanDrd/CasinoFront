@@ -1,3 +1,4 @@
+<!-- src/app/games/slot-machine/slot-machine.component.html -->
 <div class="conteneur">
   <div class="slot-wrap">
     <h2 class="titre-page">Machine à sous</h2>
@@ -6,18 +7,18 @@
     <div class="d-flex aic gap-12 mb-12" style="flex-wrap:wrap;">
       <div style="min-width:180px;">
         <label class="libelle">Mise (crédits)</label>
-        <input class="champ" type="number" [(ngModel)]="mise" [attr.min]="minBet" min="1" />
+        <input class="champ" type="number" [(ngModel)]="mise" [attr.min]="minBet" min="1" [disabled]="!isLoggedIn || enCours" />
       </div>
 
-      <button (click)="jouer()" [disabled]="enCours" class="bouton bouton--primaire" style="width:120px;">
+      <button (click)="jouer()" [disabled]="!isLoggedIn || enCours" class="bouton bouton--primaire" style="width:120px;">
         {{ enCours ? 'Spinning…' : 'Spin' }}
       </button>
 
       <div class="d-flex aic gap-8">
         <label class="libelle" style="margin:0;">Autospins</label>
-        <input class="champ" type="number" [(ngModel)]="autoSpinCount" min="0" title="0 = infini" style="width:90px;">
-        <button (click)="startAutoSpin()" [disabled]="autoSpinActive || (currentBalance!=null && mise>currentBalance)" class="bouton">Auto-Spin</button>
-        <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive" class="bouton bouton--secondaire">Stop</button>
+        <input class="champ" type="number" [(ngModel)]="autoSpinCount" min="0" title="0 = infini" style="width:90px;" [disabled]="!isLoggedIn || enCours">
+        <button (click)="startAutoSpin()" [disabled]="!isLoggedIn || autoSpinActive || (currentBalance!=null && mise>currentBalance)" class="bouton">Auto-Spin</button>
+        <button (click)="stopAutoSpin()" [disabled]="!isLoggedIn || !autoSpinActive" class="bouton bouton--secondaire">Stop</button>
       </div>
 
       <a [routerLink]="['/home']" class="bouton">Retour</a>
@@ -26,12 +27,19 @@
     </div>
 
     <!-- Reels -->
-    <div class="reels-area" [class.disabled]="enCours">
+    <div class="reels-area" [class.disabled]="enCours" style="position:relative;">
       <div class="reel" *ngFor="let reel of reels; let ri = index">
         <div class="strip" #reelStrip>
           <div class="cell" *ngFor="let s of reel.sequence">{{ s }}</div>
         </div>
         <div class="mask"></div>
+      </div>
+
+      <!-- 🔒 Overlay d’aperçu -->
+      <div *ngIf="!isLoggedIn" class="lock-overlay">
+        <div class="lock">🔒</div>
+        <div>Connecte-toi pour lancer un spin</div>
+        <a routerLink="/login" class="cta">Se connecter</a>
       </div>
     </div>
 

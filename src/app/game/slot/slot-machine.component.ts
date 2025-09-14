@@ -1,3 +1,4 @@
+// src/app/games/slot-machine/slot-machine.component.ts
 import { Component, OnDestroy, AfterViewInit, ViewChildren, QueryList, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { SlotPlayResponse, SlotService, SlotConfigResponse } from '../../service
 import { RouterLink } from '@angular/router';
 import { GameHistoryListComponent } from '../../history/game-history-list.component';
 import { HistoryService } from '../../services/history/history.service';
+import { AuthService } from '../../services/auth.service';
 
 interface ReelModel { sequence: string[]; }
 
@@ -23,7 +25,7 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   enCours = false;
   error: string | null = null;
 
-  // ⚠️ AFFICHAGE retardé : lastResult n’est posé qu’après l’animation
+  // ✅ affichage retardé (ancien résultat visible pendant le spin)
   lastResult: SlotPlayResponse | null = null;
 
   currentBalance: number | null = null;
@@ -46,15 +48,19 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
   private autoSpinDelay = 900;
   private autoSpinTimeoutId: any = null;
 
-  // ✅ AJOUT : buffers pour ne valider le résultat / historique qu’en fin d’anim
+  // buffers commit fin d’anim
   private pendingResult: SlotPlayResponse | null = null;
   private pendingHistoryEntry: any | null = null;
+
+  // ✅ aperçu
+  isLoggedIn = false;
 
   constructor(
     private game: SlotService,
     private wallet: WalletService,
     private cdr: ChangeDetectorRef,
-    private history: HistoryService
+    private history: HistoryService,
+    private authService: AuthService
   ) {
     this.sub = this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
     this.configSub = this.game.getSlotsConfig().subscribe({
@@ -66,6 +72,13 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
       },
       error: () => {}
     });
+
+    this.isLoggedIn = !!localStorage.getItem('jwt');
+    try {
+      const maybe = (this.authService as any).isLoggedIn;
+      if (typeof maybe === 'function') this.isLoggedIn = !!maybe.call(this.authService);
+      (this.authService as any).authState$?.subscribe((v: any) => this.isLoggedIn = !!v);
+    } catch {}
   }
 
   ngAfterViewInit(): void {}
@@ -76,9 +89,7 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     const pad = this.visibleCells();
     for (let r = 0; r < this.reelsCount; r++) {
       const seq: string[] = [];
-      for (let l = 0; l < this.loops; l++) {
-        for (const s of this.symbols) seq.push(s);
-      }
+      for (let l = 0; l < this.loops; l++) for (const s of this.symbols) seq.push(s);
       for (let p = 0; p < pad; p++) seq.push(this.symbols[p % this.symbols.length]);
       this.reels.push({ sequence: seq });
     }
@@ -86,9 +97,7 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
 
   jouer() {
     this.error = null;
-
-    // ❌ IMPORTANT : on efface l’ancien rendu pour ne rien afficher pendant le spin
-    //this.lastResult = null;
+    if (!this.isLoggedIn) { this.error = 'Veuillez vous connecter pour jouer.'; return; }
 
     if (!this.mise || this.mise <= 0) { this.error = 'Mise invalide.'; return; }
     if (this.mise < this.minBet) { this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`; return; }
@@ -101,8 +110,7 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
 
     this.game.playSlots({ montant: this.mise }).subscribe({
       next: (res) => {
-        // ✅ AJOUT : ne PAS afficher tout de suite.
-        // On stocke et on posera tout en fin d’animation.
+        // buffer : on affiche en fin d’anim
         this.pendingResult = res;
         this.pendingHistoryEntry = {
           game: 'slots',
@@ -113,32 +121,27 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
           createdAt: new Date().toISOString()
         };
 
-        // On respecte un temps de spin mini, puis on lance l’atterrissage.
         const elapsed = Date.now() - this.spinStartAt;
         const wait = Math.max(0, this.minSpinMs - elapsed);
-        setTimeout(() => {
-          this.landToResult(res.reels);
-          // ❌ ne pas refreshBalance / historique ici ; on le fera à la fin de l’animation
-        }, wait);
+        setTimeout(() => { this.landToResult(res.reels); }, wait);
       },
       error: (err) => {
         this.error = err?.error?.error || 'Erreur serveur ou solde insuffisant';
         this.stopAllSpinImmediate();
         this.enCours = false;
-        this.onSpinComplete(); // garde la logique auto-spin
+        this.onSpinComplete();
       }
     });
   }
 
   startAutoSpin() {
+    if (!this.isLoggedIn) { this.error = 'Veuillez vous connecter pour jouer.'; return; }
     if (this.autoSpinActive) return;
     if (!this.mise || this.mise <= 0) { this.error = 'Mise invalide.'; return; }
     if (this.currentBalance != null && this.mise > this.currentBalance) { this.error = 'Solde insuffisant pour auto-spin.'; return; }
     this.remainingAutoSpins = (this.autoSpinCount && this.autoSpinCount > 0) ? Math.floor(this.autoSpinCount) : null;
     this.autoSpinActive = true;
-    if (!this.enCours) {
-      this.jouer();
-    }
+    if (!this.enCours) this.jouer();
   }
 
   stopAutoSpin() {
@@ -180,10 +183,8 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
       const cellHeight = this.getCellHeight();
       const centerOffset = Math.floor((this.visibleCells() / 2)) * cellHeight;
       const maxDuration = 1200 + (strips.length - 1) * 200;
-
       if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout);
       this.cleanupTimeout = setTimeout(() => { this.forceCleanup(); }, maxDuration + 500);
-
       let lastStripEl: HTMLDivElement | null = null;
 
       for (let r = 0; r < Math.min(resultSymbols.length, strips.length); r++) {
@@ -214,49 +215,35 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
         const targetIndexInSeq = bestIdx;
 
         stripEl.classList.remove('spinning');
-        stripEl.offsetWidth; // force reflow
-
+        stripEl.offsetWidth;
         let translate = (targetIndexInSeq * realCellHeight) - centerOffset;
         if (translate < 0) translate = 0;
         if (translate > maxTranslate) translate = maxTranslate;
-
         const duration = 900 + r * 200;
         stripEl.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.2,1)`;
         stripEl.style.transform = `translateY(-${translate}px)`;
-
         const onEnd = () => { try { stripEl.removeEventListener('transitionend', onEnd); } catch {} };
         stripEl.addEventListener('transitionend', onEnd);
         const toId = setTimeout(() => { try { stripEl.removeEventListener('transitionend', onEnd); } catch {} }, duration + 400);
         this.transitionTimeouts.push(toId);
       }
 
-      // ✅ Quand le DERNIER rouleau termine, on confirme le résultat & l’historique
+      // commit résultat + historique à la fin
       const commitAndFinish = () => {
         this.clearAllTimers();
-
-        // ✅ Valide le rendu et l’historique EN FIN D’ANIM
-        if (this.pendingResult) {
-          this.lastResult = this.pendingResult;
-          this.pendingResult = null;
-        }
-        if (this.pendingHistoryEntry) {
-          this.history.pushLocal(this.pendingHistoryEntry);
-          this.pendingHistoryEntry = null;
-        }
+        if (this.pendingResult) { this.lastResult = this.pendingResult; this.pendingResult = null; }
+        if (this.pendingHistoryEntry) { this.history.pushLocal(this.pendingHistoryEntry); this.pendingHistoryEntry = null; }
         this.wallet.refreshBalance();
-
         this.enCours = false;
-        this.onSpinComplete(); // gère l’auto-spin
+        this.onSpinComplete();
       };
 
       if (lastStripEl) {
         const finalOnEnd = () => {
           try { lastStripEl!.removeEventListener('transitionend', finalOnEnd); } catch {}
-          setTimeout(commitAndFinish, 120); // petite marge pour la synchro visuelle
+          setTimeout(commitAndFinish, 120);
         };
         lastStripEl.addEventListener('transitionend', finalOnEnd);
-
-        // filet de sécurité si l’évènement ne se déclenche pas
         const finalTimeout = setTimeout(() => {
           try { lastStripEl!.removeEventListener('transitionend', finalOnEnd); } catch {}
           this.forceCleanup();
@@ -264,7 +251,6 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
         }, (900 + (strips.length - 1) * 200) + 800);
         this.transitionTimeouts.push(finalTimeout);
       } else {
-        // si pas de strip (cas extrême), on valide quand même
         this.forceCleanup();
         commitAndFinish();
       }
@@ -278,8 +264,6 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
       el.style.transition = '';
     });
     this.clearAllTimers();
-
-    // Nettoyage des buffers en cas d’erreur/stop
     this.pendingResult = null;
     this.pendingHistoryEntry = null;
   }
@@ -292,8 +276,6 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
     });
     this.clearAllTimers();
     this.enCours = false;
-
-    // Pas de commit ici : commitAndFinish s’en charge quand appelé.
   }
 
   private clearAllTimers() {
@@ -305,13 +287,14 @@ export class SlotMachineComponent implements OnDestroy, AfterViewInit {
 
   private getCellHeight(): number {
     const firstStrip = this.reelStrips.first;
-    if (!firstStrip) return 60; // correspond à .cell { height: 60px; }
+    if (!firstStrip) return 60;
     const cell = firstStrip.nativeElement.querySelector('.cell') as HTMLElement | null;
     if (!cell) return 60;
     return Math.max(32, Math.round(cell.getBoundingClientRect().height));
   }
 
   private visibleCells(): number { return 3; }
+
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();

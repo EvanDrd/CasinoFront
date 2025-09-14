@@ -1,3 +1,4 @@
+// src/app/games/coinflip/coinflip.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +7,7 @@ import { CoinflipService } from '../../services/game/coinflip.service';
 import { WalletService } from '../../services/wallet.service';
 import { GameHistoryListComponent } from '../../history/game-history-list.component';
 import { HistoryService } from '../../services/history/history.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-coinflip',
@@ -22,19 +24,31 @@ export class CoinflipComponent {
   message: string | null = null;
   lastResult: any = null;
   currentBalance: number | null = null;
-  maxBet = 1000000;
+  maxBet = 1_000_000;
   minBet = 100;
   resolutionEnCours = false;
   targetRot: string = '0deg';
   rotateDuration: string = '950ms';
   baseRotDeg: number = 0;
 
+  // ✅ hors connexion : aperçu uniquement
+  isLoggedIn = false;
+
   constructor(
     private game: CoinflipService,
     private wallet: WalletService,
-    private history: HistoryService
+    private history: HistoryService,
+    private authService: AuthService
   ) {
     this.wallet.balance$.subscribe(b => this.currentBalance = b ?? null);
+
+    // état connecté ?
+    this.isLoggedIn = !!localStorage.getItem('jwt');
+    try {
+      const maybe = (this.authService as any).isLoggedIn;
+      if (typeof maybe === 'function') this.isLoggedIn = !!maybe.call(this.authService);
+      (this.authService as any).authState$?.subscribe((v: any) => this.isLoggedIn = !!v);
+    } catch {}
   }
 
   private randInt(min: number, max: number): number {
@@ -45,15 +59,12 @@ export class CoinflipComponent {
     this.error = null;
     this.message = null;
 
+    if (!this.isLoggedIn) { this.error = 'Veuillez vous connecter pour jouer.'; return; }
     if (!this.mise || this.mise < this.minBet) {
       this.error = `Mise invalide : la mise minimale est de ${this.minBet} crédits.`;
       return;
     }
-
-    if (!this.choix) {
-      this.error = 'Choix requis.';
-      return;
-    }
+    if (!this.choix) { this.error = 'Choix requis.'; return; }
 
     this.enCours = true;
     this.resolutionEnCours = false;
@@ -62,35 +73,30 @@ export class CoinflipComponent {
     this.game.jouerPiece({ choix: this.choix, montant: this.mise }).subscribe({
       next: (res) => {
         const base = (res.outcome === 'face') ? 180 : 0;
-
-        // on met la base tout de suite pour que l'état visuel de départ soit correct
         this.baseRotDeg = base;
 
         const tours = this.randInt(6, 10);
         const totalDeg = base + tours * 360;
         this.targetRot = `${totalDeg}deg`;
         this.rotateDuration = `${this.randInt(800, 1100)}ms`;
-
         this.resolutionEnCours = true;
 
         this.lastResult = res;
         this.message = res.win ? 'Bravo !' : 'Dommage.';
         this.wallet.refreshBalance();
-        const entry = {
+        this.history.pushLocal({
           game: 'coinflip',
           outcome: `choice=${this.choix},outcome=${res.outcome}`,
           montantJoue: (res.montantJoue ?? this.mise),
           montantGagne: (res.montantGagne ?? 0),
           multiplier: (res.montantJoue ? ((res.montantGagne ?? 0) / res.montantJoue) : (res.win ? 2 : 0)),
           createdAt: new Date().toISOString()
-        };
-        this.history.pushLocal(entry);
+        });
 
         const totalAnimMs = Math.max(680, parseInt(this.rotateDuration)) + 120;
         setTimeout(() => {
           this.enCours = false;
           this.resolutionEnCours = false;
-          // garder baseRotDeg à la valeur finale (0 ou 180) pour le rendu statique
           this.baseRotDeg = base;
         }, totalAnimMs);
       },
@@ -102,7 +108,5 @@ export class CoinflipComponent {
     });
   }
 
-  refreshBalance() {
-    this.wallet.refreshBalance();
-  }
+  refreshBalance() { this.wallet.refreshBalance(); }
 }

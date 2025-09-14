@@ -1,10 +1,11 @@
+<!-- src/app/games/roulette/roulette.component.html -->
 <div class="conteneur section-jeu roulette-layout">
   <!-- Contrôles -->
   <div class="bet-controls">
     <h3 style="margin:0 0 10px 0;font-family:'Playfair Display',serif;color:#f1f5f9;">Parier</h3>
 
     <label class="libelle">Type de pari</label>
-    <select [(ngModel)]="betType" class="champ mb-12">
+    <select [(ngModel)]="betType" class="champ mb-12" [disabled]="!isLoggedIn || enCours">
       <option value="straight">Numéro</option>
       <option value="color">Couleur</option>
       <option value="parity">Pair / Impair</option>
@@ -15,17 +16,17 @@
     <div class="mb-12">
       <label class="libelle">Valeur</label>
       <ng-container [ngSwitch]="betType">
-        <input *ngSwitchCase="'straight'" class="champ" type="number" min="0" max="36" [(ngModel)]="betValue"/>
-        <select *ngSwitchCase="'color'" class="champ" [(ngModel)]="betValue">
+        <input *ngSwitchCase="'straight'" class="champ" type="number" min="0" max="36" [(ngModel)]="betValue" [disabled]="!isLoggedIn || enCours"/>
+        <select *ngSwitchCase="'color'" class="champ" [(ngModel)]="betValue" [disabled]="!isLoggedIn || enCours">
           <option value="red">Rouge</option><option value="black">Noir</option>
         </select>
-        <select *ngSwitchCase="'parity'" class="champ" [(ngModel)]="betValue">
+        <select *ngSwitchCase="'parity'" class="champ" [(ngModel)]="betValue" [disabled]="!isLoggedIn || enCours">
           <option value="even">Pair</option><option value="odd">Impair</option>
         </select>
-        <select *ngSwitchCase="'range'" class="champ" [(ngModel)]="betValue">
+        <select *ngSwitchCase="'range'" class="champ" [(ngModel)]="betValue" [disabled]="!isLoggedIn || enCours">
           <option value="low">1-18</option><option value="high">19-36</option>
         </select>
-        <select *ngSwitchCase="'dozen'" class="champ" [(ngModel)]="betValue">
+        <select *ngSwitchCase="'dozen'" class="champ" [(ngModel)]="betValue" [disabled]="!isLoggedIn || enCours">
           <option value="1">1 (1-12)</option><option value="2">2 (13-24)</option><option value="3">3 (25-36)</option>
         </select>
       </ng-container>
@@ -33,15 +34,15 @@
 
     <div class="mb-12">
       <label class="libelle">Mise</label>
-      <input class="champ" type="number" [(ngModel)]="montant" min="1"/>
+      <input class="champ" type="number" [(ngModel)]="montant" min="1" [disabled]="!isLoggedIn || enCours"/>
       <small class="sous-texte">Mise minimale : <strong>{{ minBet }}</strong> • Solde : <strong>{{ currentBalance ?? '—' }}</strong></small>
     </div>
 
     <div class="boutons">
-      <button (click)="jouer()" [disabled]="enCours || !montant || montant < minBet" class="bouton bouton--or">Placer le pari</button>
-      <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="autoSpinActive || montant<minBet" class="bouton">Auto (N)</button>
-      <button (click)="startAutoSpin()" [disabled]="autoSpinActive || montant<minBet" class="bouton">Auto ∞</button>
-      <button (click)="stopAutoSpin()" [disabled]="!autoSpinActive" class="bouton bouton--secondaire">Stop</button>
+      <button (click)="jouer()" [disabled]="!isLoggedIn || enCours || !montant || montant < minBet" class="bouton bouton--or">Placer le pari</button>
+      <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="!isLoggedIn || autoSpinActive || montant<minBet" class="bouton">Auto (N)</button>
+      <button (click)="startAutoSpin()" [disabled]="!isLoggedIn || autoSpinActive || montant<minBet" class="bouton">Auto ∞</button>
+      <button (click)="stopAutoSpin()" [disabled]="!isLoggedIn || !autoSpinActive" class="bouton bouton--secondaire">Stop</button>
       <a [routerLink]="['/home']" class="bouton">Retour</a>
     </div>
 
@@ -66,7 +67,8 @@
   <!-- Zone roue + table -->
   <div class="roulette-main">
     <h2 class="titre-page">Roulette</h2>
-    <div class="wheel-stage">
+
+    <div class="wheel-stage" style="position:relative;">
       <div class="wheel-wrapper" [style.width.px]="wheelSizePx" [style.height.px]="wheelSizePx">
         <div class="wheel-numbers-container">
           <div #wheelEl class="wheel-numbers" [class.spinning]="wheelSpinning" [style.transition]="wheelTransition" [style.transform]="'rotate(' + wheelRotation + 'deg)'">
@@ -77,14 +79,20 @@
         </div>
         <div class="pointer">▼</div>
       </div>
+
+      <!-- 🔒 Overlay d’aperçu -->
+      <div *ngIf="!isLoggedIn" class="lock-overlay">
+        <div class="lock">🔒</div>
+        <div>Connecte-toi pour faire tourner la roue</div>
+        <a routerLink="/login" class="cta">Se connecter</a>
+      </div>
     </div>
 
-    <!-- Table des mises (reprend tes classes existantes) -->
+    <!-- Table des mises -->
     <div class="bet-table">
-      <!-- … ton tableau existant inchangé … -->
       <div class="table-top">
         <div class="zero-col">
-          <button class="cell zero" (click)="betType='straight'; betValue='0'; choisirNumero(0)">0</button>
+          <button class="cell zero" (click)="betType='straight'; betValue='0'; choisirNumero(0)" [disabled]="!isLoggedIn || enCours">0</button>
         </div>
         <div class="rows">
           <div class="row" *ngFor="let row of tableRows">
@@ -93,24 +101,25 @@
                     [class.red]="isRed(n)"
                     [class.black]="!isRed(n) && n !== 0"
                     [class.selected]="selectedNumber === n"
-                    (click)="choisirNumero(n); betType='straight'; betValue = ''+n">
+                    (click)="choisirNumero(n); betType='straight'; betValue = ''+n"
+                    [disabled]="!isLoggedIn || enCours">
               {{ n }}
             </button>
           </div>
         </div>
       </div>
       <div class="dozens">
-        <button class="cell dozen" (click)="betType='dozen'; betValue='1'">1 to 12</button>
-        <button class="cell dozen" (click)="betType='dozen'; betValue='2'">13 to 24</button>
-        <button class="cell dozen" (click)="betType='dozen'; betValue='3'">25 to 36</button>
+        <button class="cell dozen" (click)="betType='dozen'; betValue='1'" [disabled]="!isLoggedIn || enCours">1 to 12</button>
+        <button class="cell dozen" (click)="betType='dozen'; betValue='2'" [disabled]="!isLoggedIn || enCours">13 to 24</button>
+        <button class="cell dozen" (click)="betType='dozen'; betValue='3'" [disabled]="!isLoggedIn || enCours">25 to 36</button>
       </div>
       <div class="bottom-row">
-        <button class="cell bottom" (click)="betType='range'; betValue='low'">1 to 18</button>
-        <button class="cell bottom" (click)="betType='parity'; betValue='even'">Even</button>
-        <button class="cell bottom red-toggle" (click)="betType='color'; betValue='red'">Red</button>
-        <button class="cell bottom black-toggle" (click)="betType='color'; betValue='black'">Black</button>
-        <button class="cell bottom" (click)="betType='parity'; betValue='odd'">Odd</button>
-        <button class="cell bottom" (click)="betType='range'; betValue='high'">19 to 36</button>
+        <button class="cell bottom" (click)="betType='range'; betValue='low'" [disabled]="!isLoggedIn || enCours">1 to 18</button>
+        <button class="cell bottom" (click)="betType='parity'; betValue='even'" [disabled]="!isLoggedIn || enCours">Even</button>
+        <button class="cell bottom red-toggle" (click)="betType='color'; betValue='red'" [disabled]="!isLoggedIn || enCours">Red</button>
+        <button class="cell bottom black-toggle" (click)="betType='color'; betValue='black'" [disabled]="!isLoggedIn || enCours">Black</button>
+        <button class="cell bottom" (click)="betType='parity'; betValue='odd'" [disabled]="!isLoggedIn || enCours">Odd</button>
+        <button class="cell bottom" (click)="betType='range'; betValue='high'" [disabled]="!isLoggedIn || enCours">19 to 36</button>
       </div>
     </div>
   </div>

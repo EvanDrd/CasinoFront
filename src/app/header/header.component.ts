@@ -1,8 +1,7 @@
-// src/app/header/header.component.ts
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {Router, RouterLink} from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { WalletService } from '../services/wallet.service';
 import { BalanceHeaderComponent } from './balance-header.component';
@@ -13,13 +12,12 @@ import { BalanceHeaderComponent } from './balance-header.component';
   imports: [CommonModule, FormsModule, BalanceHeaderComponent, RouterLink],
   templateUrl: './header.component.html'
 })
-export class HeaderComponent {
+export class HeaderComponent  {
   email = '';
   motDePasse = '';
   loading = false;
   error: string | null = null;
   userObj: { email?: string; pseudo?: string } | null = null;
-
   constructor(
     private authService: AuthService,
     private wallet: WalletService,
@@ -49,12 +47,10 @@ export class HeaderComponent {
     }
     this.loading = true;
     this.authService.login(this.email, this.motDePasse).subscribe({
-      next: (res: any) => {
+      next: () => {
         this.loading = false;
         this.error = null;
         this.loadUser();
-        // walletService connexion / refresh géré par AuthService.login via injector
-        // rester sur la même page (home)
       },
       error: (err) => {
         this.loading = false;
@@ -65,9 +61,8 @@ export class HeaderComponent {
 
   logout() {
     this.authService.logout();
-    this.wallet.clear?.(); // si WalletService possède clear (sécurisé)
+    this.wallet.clear?.();
     this.loadUser();
-    // stay on home
     this.router.navigate(['/home']);
   }
 }
