@@ -1,7 +1,20 @@
 <header class="en-tete-casino">
   <div class="barre">
+
     <!-- Zone gauche -->
     <div class="zone-gauche d-flex aic gap-12">
+
+      <!-- Bouton Bonus quotidien -->
+      <button
+        class="gift-btn"
+        [class.available]="canClaim"
+        [disabled]="!canClaim || bonusLoading"
+        (click)="onClickGift()"
+        [title]="giftTooltip">
+        <img src="assets/images/bonus.png" alt="Bonus quotidien" style="width:60px;height:60px;">
+
+      </button>
+
       <h1>Mon Casino</h1>
     </div>
 
@@ -12,7 +25,7 @@
       </a>
     </div>
 
-    <!-- Zone droite (login / profil) -->
+    <!-- Zone droite -->
     <div class="zone-droite">
       <ng-container *ngIf="isLoggedIn(); else showLogin">
         <div class="d-flex aic gap-12">
@@ -39,5 +52,10 @@
         <div *ngIf="error" style="color:#ffb3b3;margin-left:12px;">{{ error }}</div>
       </ng-template>
     </div>
+  </div>
+
+  <!-- Petit toast -->
+  <div *ngIf="bonusMsg" style="position:fixed;top:12px;left:12px;background:#1f2937;color:#fff;padding:8px 10px;border-radius:8px;">
+    {{ bonusMsg }}
   </div>
 </header>
