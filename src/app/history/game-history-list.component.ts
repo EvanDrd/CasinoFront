@@ -1,3 +1,4 @@
+// src/app/history/game-history-list.component.ts
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HistoryEntry, HistoryService } from '../services/history/history.service';
@@ -19,20 +20,16 @@ import { RouterLink } from '@angular/router';
         <li *ngFor="let it of items" style="padding:8px 0;border-top:1px solid #f6f6f6;display:flex;justify-content:space-between;align-items:center;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div *ngIf="formatOutcome(it) as fo" style="display:flex;align-items:center;gap:10px;">
-              <!-- Roulette -->
               <span *ngIf="fo.type==='roulette' && fo.number!=null"
                     [style.background]="colorFor(fo.color)"
                     style="display:inline-flex;width:34px;height:34px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:700;">
                 {{ fo.number }}
               </span>
-
-              <!-- Coinflip -->
               <span *ngIf="fo.type==='coinflip'"
                     [style.background]="couleurPileFace(fo.outcome)"
                     style="display:inline-flex;width:34px;height:34px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:800;font-size:0.7rem;line-height:1;">
                 {{ (fo.outcome || '—') | uppercase }}
               </span>
-
             </div>
 
             <div>
@@ -68,6 +65,11 @@ export class GameHistoryListComponent implements OnInit, OnDestroy {
   constructor(private svc: HistoryService) {}
 
   ngOnInit(): void {
+    if (!localStorage.getItem('jwt')) {
+      this.items = [];
+      this.loading = false;
+      return;
+    }
     this.loading = true;
     this.sub = this.svc.entriesObservable$.subscribe(list => {
       if (!this.game) {
@@ -86,7 +88,6 @@ export class GameHistoryListComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
 
-  // MODIF: formatage enrichi
   formatOutcome(it: HistoryEntry) {
     if (!it || !it.outcome) return null;
     const o = it.outcome;
@@ -138,7 +139,6 @@ export class GameHistoryListComponent implements OnInit, OnDestroy {
     return '#666';
   }
 
-  // AJOUT: couleurs coinflip
   couleurPileFace(side?: string|null) {
     if (!side) return '#666';
     return side.toLowerCase() === 'pile'

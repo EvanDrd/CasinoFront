@@ -1,3 +1,4 @@
+// src/app/history/history-widget.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HistoryEntry, HistoryService } from '../services/history/history.service';
@@ -20,20 +21,17 @@ import { Subscription } from 'rxjs';
             <div style="display:flex;align-items:center;gap:10px;">
 
               <div *ngIf="formatOutcome(it) as fo" style="display:flex;align-items:center;gap:10px;">
-                <!-- Roulette -->
                 <span *ngIf="fo.type==='roulette' && fo.number!=null"
                       [style.background]="colorFor(fo.color)"
                       style="display:inline-flex;width:36px;height:36px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:700;">
                   {{ fo.number }}
                 </span>
 
-                <!-- Coinflip -->
                 <span *ngIf="fo.type==='coinflip'"
                           [style.background]="couleurPileFace(fo.outcome)"
                           style="display:inline-flex;width:36px;height:36px;border-radius:50%;justify-content:center;align-items:center;color:white;font-weight:800;font-size:0.7rem;line-height:1;">
                   {{ (fo.outcome || '—') | uppercase }}
                 </span>
-
 
                 <div>
                   <div style="font-weight:600">{{ it.game | uppercase }} • {{ fo.label }}</div>
@@ -71,6 +69,11 @@ export class HistoryWidgetComponent implements OnInit, OnDestroy {
   constructor(private svc: HistoryService) {}
 
   ngOnInit(): void {
+    if (!localStorage.getItem('jwt')) {
+      this.items = [];
+      this.loading = false;
+      return;
+    }
     this.sub = this.svc.entriesObservable$.subscribe(list => {
       this.items = list.slice(0, 15);
       this.loading = false;
@@ -80,7 +83,6 @@ export class HistoryWidgetComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
 
-  // MODIF: formatage unifié
   formatOutcome(it: HistoryEntry) {
     if (!it || !it.outcome) return null;
     const o = it.outcome;
@@ -132,7 +134,6 @@ export class HistoryWidgetComponent implements OnInit, OnDestroy {
     return '#666';
   }
 
-  // AJOUT: couleurs coinflip
   couleurPileFace(side?: string|null) {
     if (!side) return '#666';
     return side.toLowerCase() === 'pile'
