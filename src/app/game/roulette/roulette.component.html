@@ -39,8 +39,10 @@
     </div>
 
     <div class="boutons">
+      <input type="number" min="1" placeholder="Nb de tours"
+             [(ngModel)]="autoSpinCount" [disabled]="autoSpinActive">
       <button (click)="jouer()" [disabled]="!isLoggedIn || enCours || !montant || montant < minBet" class="bouton bouton--or">Placer le pari</button>
-      <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="!isLoggedIn || autoSpinActive || montant<minBet" class="bouton">Auto (N)</button>
+      <button (click)="startAutoSpin(autoSpinCount!)" [disabled]="!isLoggedIn || autoSpinActive || montant<minBet || !autoSpinCount " class="bouton">Auto (N)</button>
       <button (click)="startAutoSpin()" [disabled]="!isLoggedIn || autoSpinActive || montant<minBet" class="bouton">Auto ∞</button>
       <button (click)="stopAutoSpin()" [disabled]="!isLoggedIn || !autoSpinActive" class="bouton bouton--secondaire">Stop</button>
       <a [routerLink]="['/home']" class="bouton">Retour</a>
