@@ -1,0 +1,6 @@
+
+.card { padding: 8px; border: 1px solid #333; border-radius: 6px; margin-bottom: 8px; }
+.cards { display:flex; gap:8px; margin:6px 0; }
+.card.back { filter: grayscale(1); }
+.seats { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.result { margin-top:6px; }

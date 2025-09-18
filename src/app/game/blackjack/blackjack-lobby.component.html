@@ -1,0 +1,44 @@
+<div class="lobby-wrap">
+  <header class="lobby-head">
+    <h1>Tables Blackjack</h1>
+
+    <div class="create-form">
+      <input [(ngModel)]="create.name" placeholder="Nom de la table (optionnel)">
+      <label>Sièges
+        <input type="number" [(ngModel)]="create.maxSeats" min="2" max="7">
+      </label>
+      <label>Min
+        <input type="number" [(ngModel)]="create.minBet" min="1">
+      </label>
+      <label>Max
+        <input type="number" [(ngModel)]="create.maxBet" [min]="create.minBet">
+      </label>
+      <select [(ngModel)]="create.visibility">
+        <option value="PUBLIC">Publique</option>
+        <option value="PRIVATE">Privée</option>
+      </select>
+      <input *ngIf="create.visibility==='PRIVATE'"
+             [(ngModel)]="create.code"
+             placeholder="Code d’accès (optionnel)">
+      <button (click)="onCreate()" [disabled]="loading">Créer</button>
+    </div>
+  </header>
+
+  <div *ngIf="loading">Chargement…</div>
+  <div *ngIf="error" class="err">{{ error }}</div>
+
+  <section class="grid">
+    <article *ngFor="let t of tables" class="card">
+      <!-- On n’utilise QUE les champs réellement renvoyés par l’API -->
+      <h3>Table {{ (t.id + '').slice(0,6) }}</h3>
+      <p>
+        <small>
+          {{ t.maxSeats }} sièges
+          • Phase: {{ t.phase }}
+          • {{ t.isPrivate ? 'Privée' : 'Publique' }}
+        </small>
+      </p>
+      <button (click)="goTable(t)">Rejoindre</button>
+    </article>
+  </section>
+</div>

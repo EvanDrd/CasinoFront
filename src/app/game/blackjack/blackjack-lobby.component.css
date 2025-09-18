@@ -1,0 +1,8 @@
+.lobby-wrap { max-width: 980px; margin: 24px auto; padding: 12px; }
+.lobby-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
+.create-form { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.create-form input, .create-form select { padding:6px 8px; border-radius:8px; border:1px solid #ccc; }
+.grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+.card { border:1px solid #eee; border-radius:12px; padding:12px; background:#fff; }
+.card button { padding:8px 12px; border-radius:8px; border:none; background:#1976d2; color:#fff; cursor:pointer; }
+.err { color:#b00020; }
