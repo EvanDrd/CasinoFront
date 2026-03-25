@@ -10,6 +10,7 @@ import { WalletService } from '../services/wallet.service';
 import { BalanceHeaderComponent } from './balance-header.component';
 import { UiService } from '../services/ui.service';
 import {environment} from '../../environments/environment';
+import {AdsComponent} from '../ads/ads.component';
 
 type BonusStatus = {
   canClaim: boolean;
@@ -23,7 +24,7 @@ type BonusStatus = {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, FormsModule, BalanceHeaderComponent, RouterLink],
+  imports: [CommonModule, FormsModule, BalanceHeaderComponent, RouterLink, AdsComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })

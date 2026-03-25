@@ -11,7 +11,8 @@ import { BalanceHeaderComponent } from './header/balance-header.component'; // �
 import { AuthService } from './services/auth.service';
 import { WalletService } from './services/wallet.service';
 
-import {ChatComponent} from './chat/chat.component'; // ✅
+import {ChatComponent} from './chat/chat.component';
+import {AdsComponent} from './ads/ads.component'; // ✅
 
 @Component({
   selector: 'app-root',
@@ -25,6 +26,7 @@ import {ChatComponent} from './chat/chat.component'; // ✅
     LoginComponent,
     BalanceHeaderComponent,
     ChatComponent,
+    AdsComponent
     // ✅
   ],
   templateUrl: './app.component.html',
